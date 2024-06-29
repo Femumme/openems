@@ -57,6 +57,7 @@ import { StorageComponent } from './common/storage/storage.component';
 import { Controller_ChannelthresholdComponent } from './Controller/Channelthreshold/Channelthreshold';
 import { Controller_ChpSocComponent } from './Controller/ChpSoc/ChpSoc';
 import { Controller_ChpSocModalComponent } from './Controller/ChpSoc/modal/modal.component';
+import {Controller_Ess_Timeframe} from "./Controller/Ess/Timeframe/Ess_Timeframe";
 import { Controller_LimitActivePowerSymmetric } from "./Controller/Symmetric/LimitActivePower/Symmetric_LimitActivePowerSymmetric";
 import { Controller_Ess_FixActivePower } from './Controller/Ess/FixActivePower/Ess_FixActivePower';
 import { Controller_Ess_GridOptimizedCharge } from './Controller/Ess/GridOptimizedCharge/Ess_GridOptimizedCharge';
@@ -101,6 +102,7 @@ import { Controller_Evcs } from './Controller/Evcs/Evcs';
     Controller_Ess_FixActivePower,
     Controller_Ess_Timeframe,
     Controller_LimitActivePowerSymmetric,
+    Controller_Ess_Timeframe,
     Controller_Ess_GridOptimizedCharge,
     Controller_Ess_TimeOfUseTariff,
     Controller_Evcs,

@@ -216,6 +216,11 @@
           "continuousSellToGridPower": "Décharge ci-dessous",
           "relationError": "La limite de charge doit être supérieure à la limite de décharge"
         },
+        "Timeframe": {
+          "targetSoc": "État de charge cible",
+          "endTime": "Heure de fin",
+          "startTime": "Heure de début"
+        },
         "LimitActivePower": {
           "chargeLimit": "Limite de charge",
           "dischargeLimit": "Limite de décharge",

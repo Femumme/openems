@@ -199,6 +199,11 @@
           "switchOnBelow": "Inschakelen onder",
           "threshold": "Thresholded"
         },
+        "Timeframe": {
+          "targetSoc": "Doel laadstatus",
+          "endTime": "Eindtijd",
+          "startTime": "Starttijd"
+        },
         "LimitActivePower": {
           "chargeLimit": "Laadlimiet",
           "dischargeLimit": "Ontlaadlimiet",
