@@ -4,6 +4,7 @@
     "actualPower": "e-car Carga",
     "autarchy": "Autosuficiencia",
     "automatic": "Automático",
+    "auto": "Auto",
     "onDateAtTime": "en {{date}} a las {{time}}",
     "cancel": "cancelar",
     "capacity": "Capacidad",
@@ -212,6 +213,11 @@
           "chargeLimit": "Límite de carga",
           "dischargeLimit": "Límite de descarga",
           "endTime": "Hora de fin",
+          "startTime": "Hora de inicio"
+        },
+        "Timeframe": {
+          "targetSoc": "Estado de carga objetivo",
+          "endTime": "Hora de finalización",
           "startTime": "Hora de inicio"
         },
         "Peakshaving": {

@@ -28,7 +28,6 @@ export class ModalLineComponent extends AbstractModalLine {
 
   /** Fixed indentation of the modal-line */
   @Input() protected textIndent: TextIndentation = TextIndentation.NONE;
-  protected readonly console = console;
 }
 
 export enum TextIndentation {
