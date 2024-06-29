@@ -61,6 +61,11 @@
           "continuousSellToGridPower": "Discharge below",
           "relationError": "Charge limit must be greater than the Discharge limit"
         },
+        "Timeframe": {
+          "targetSoc": "Target state of charge",
+          "endTime": "End Time",
+          "startTime": "Start Time"
+        },
         "LimitActivePower": {
           "chargeLimit": "Charge Limit",
           "dischargeLimit": "Discharge Limit",
@@ -458,6 +463,7 @@
     "apply": "Apply",
     "autarchy": "Autarchy",
     "automatic": "Automatically",
+    "auto": "Auto",
     "cancel": "cancel",
     "capacity": "Capacity",
     "changeAccepted": "Change accepted",
@@ -969,3 +975,4 @@
     "FUNCTIONALITY_TEMPORARILY_NOT_AVAILABLE": "This function is temporarily not available in the app, please use the web app instead."
   }
 }
+

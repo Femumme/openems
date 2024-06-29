@@ -4,6 +4,7 @@
     "actualPower": "e-car Laad vermogen",
     "autarchy": "Autarkie",
     "automatic": "Automatisch",
+    "auto": "Auto",
     "onDateAtTime": "op {{date}} om {{time}}",
     "cancel": "annuleren",
     "capacity": "Hoedanigheid",
@@ -197,6 +198,11 @@
           "switchOnAbove": "Inschakelen via",
           "switchOnBelow": "Inschakelen onder",
           "threshold": "Thresholded"
+        },
+        "Timeframe": {
+          "targetSoc": "Doel laadstatus",
+          "endTime": "Eindtijd",
+          "startTime": "Starttijd"
         },
         "LimitActivePower": {
           "chargeLimit": "Laadlimiet",

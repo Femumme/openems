@@ -61,6 +61,11 @@
           "continuousSellToGridPower": "Entladung unter",
           "relationError": "Beladungsgrenze muss größer der Entladungsgrenze sein"
         },
+        "Timeframe": {
+          "targetSoc": "Ziel-Ladezustand",
+          "endTime": "End-Zeit",
+          "startTime": "Start-Zeit"
+        },
         "LimitActivePower": {
           "chargeLimit": "Lade-Limit",
           "dischargeLimit": "Entlade-Limit",
@@ -457,6 +462,7 @@
     "apply": "Übernehmen",
     "autarchy": "Autarkie",
     "automatic": "Automatisch",
+    "auto": "Auto",
     "cancel": "abbrechen",
     "capacity": "Kapazität",
     "changeAccepted": "Änderung übernommen",
@@ -966,3 +972,4 @@
     "FUNCTIONALITY_TEMPORARILY_NOT_AVAILABLE": "Diese Funktion ist vorübergehend in der App nicht verfügbar, verwenden Sie bitte dafür die Web-App."
   }
 }
+
