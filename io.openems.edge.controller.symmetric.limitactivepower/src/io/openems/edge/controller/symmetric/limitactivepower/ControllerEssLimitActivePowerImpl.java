@@ -18,91 +18,118 @@ import io.openems.edge.ess.power.api.Phase;
 import io.openems.edge.ess.power.api.Pwr;
 import io.openems.edge.ess.power.api.Relationship;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+
 @Designate(ocd = Config.class, factory = true)
 @Component(//
-		name = "Controller.Symmetric.LimitActivePower", //
-		immediate = true, //
-		configurationPolicy = ConfigurationPolicy.REQUIRE //
+        name = "Controller.Symmetric.LimitActivePower", //
+        immediate = true, //
+        configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
 public class ControllerEssLimitActivePowerImpl extends AbstractOpenemsComponent
-		implements ControllerEssLimitActivePower, Controller, OpenemsComponent {
+        implements ControllerEssLimitActivePower, Controller, OpenemsComponent {
 
-	@Reference
-	private ComponentManager componentManager;
+    @Reference
+    private ComponentManager componentManager;
 
-	private Config config;
+    private Config config;
 
-	/**
-	 * The configured Max Charge ActivePower.
-	 *
-	 * <p>
-	 * Value is zero or negative
-	 */
-	private int maxChargePower = 0;
+    /**
+     * The configured Max Charge ActivePower.
+     *
+     * <p>
+     * Value is zero or negative
+     */
+    private int maxChargePower = 0;
 
-	/**
-	 * The configured Max Discharge ActivePower.
-	 *
-	 * <p>
-	 * Value is zero or positive
-	 */
-	private int maxDischargePower = 0;
+    /**
+     * The configured Max Discharge ActivePower.
+     *
+     * <p>
+     * Value is zero or positive
+     */
+    private int maxDischargePower = 0;
 
-	public ControllerEssLimitActivePowerImpl() {
-		super(//
-				OpenemsComponent.ChannelId.values(), //
-				Controller.ChannelId.values(), //
-				ControllerEssLimitActivePower.ChannelId.values() //
-		);
-	}
+    public ControllerEssLimitActivePowerImpl() {
+        super(//
+                OpenemsComponent.ChannelId.values(), //
+                Controller.ChannelId.values(), //
+                ControllerEssLimitActivePower.ChannelId.values() //
+        );
+    }
 
-	@Activate
-	private void activate(ComponentContext context, Config config) {
-		super.activate(context, config.id(), config.alias(), config.enabled());
-		this.config = config;
-		this.maxChargePower = config.maxChargePower() * -1;
-		this.maxDischargePower = config.maxDischargePower();
-	}
+    @Activate
+    private void activate(ComponentContext context, Config config) {
+        super.activate(context, config.id(), config.alias(), config.enabled());
+        this.config = config;
+        this.maxChargePower = config.maxChargePower() * -1;
+        this.maxDischargePower = config.maxDischargePower();
+    }
 
-	@Override
-	@Deactivate
-	protected void deactivate() {
-		super.deactivate();
-	}
+    @Override
+    @Deactivate
+    protected void deactivate() {
+        super.deactivate();
+    }
 
-	@Override
-	public void run() throws OpenemsNamedException {
-		ManagedSymmetricEss ess = this.componentManager.getComponent(this.config.ess_id());
+    @Override
+    public void run() throws OpenemsNamedException {
+        ManagedSymmetricEss ess = this.componentManager.getComponent(this.config.ess_id());
 
-		if (this.config.validatePowerConstraints()) {
+        var startTime = getDateFromIsoString(config.startTime());
+        var endTime = getDateFromIsoString(config.endTime());
+        var currentTime = new Date();
+        if (startTime != null && startTime.after(currentTime)) {
+            // do nothing
+            return;
+        }
+        if (endTime != null && endTime.before(currentTime)) {
+            // do nothing
+            return;
+        }
 
-			// adjust value so that it fits into Min/MaxActivePower
-			var maxPower = ess.getPower().getMaxPower(ess, Phase.ALL, Pwr.ACTIVE);
-			var minPower = ess.getPower().getMinPower(ess, Phase.ALL, Pwr.ACTIVE);
-			var calculatedMaxDischargePower = fitIntoMinMax(minPower, maxPower, this.maxDischargePower);
-			var calculatedMaxChargePower = fitIntoMinMax(minPower, maxPower, this.maxChargePower);
+        if (this.config.validatePowerConstraints()) {
 
-			// set result
-			ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
-					Relationship.GREATER_OR_EQUALS, calculatedMaxChargePower);
-			ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
-					Relationship.LESS_OR_EQUALS, calculatedMaxDischargePower);
-		} else {
+            // adjust value so that it fits into Min/MaxActivePower
+            var maxPower = ess.getPower().getMaxPower(ess, Phase.ALL, Pwr.ACTIVE);
+            var minPower = ess.getPower().getMinPower(ess, Phase.ALL, Pwr.ACTIVE);
+            var calculatedMaxDischargePower = fitIntoMinMax(minPower, maxPower, this.maxDischargePower);
+            var calculatedMaxChargePower = fitIntoMinMax(minPower, maxPower, this.maxChargePower);
+            // set result
+            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
+                    Relationship.GREATER_OR_EQUALS, calculatedMaxChargePower);
+            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
+                    Relationship.LESS_OR_EQUALS, calculatedMaxDischargePower);
+        } else {
 
-			ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.GREATER_OR_EQUALS,
-					this.maxChargePower);
-			ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.LESS_OR_EQUALS,
-					this.maxDischargePower);
-		}
-	}
+            ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.GREATER_OR_EQUALS,
+                    this.maxChargePower);
+            ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.LESS_OR_EQUALS,
+                    this.maxDischargePower);
+        }
+    }
 
-	private static int fitIntoMinMax(int min, int max, int value) {
-		if (value > max) {
-			value = max;
-		}
-		if (value < min) {
-			value = min;
-		}
-		return value;
-	}
+    private static Date getDateFromIsoString(String iso8601String) {
+        if (iso8601String == null || iso8601String.isBlank()) {
+            return null;
+        }
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
+        OffsetDateTime offsetDateTime = OffsetDateTime.parse(iso8601String, timeFormatter);
+
+        return Date.from(Instant.from(offsetDateTime));
+    }
+
+
+    private static int fitIntoMinMax(int min, int max, int value) {
+        if (value > max) {
+            value = max;
+        }
+        if (value < min) {
+            value = min;
+        }
+        return value;
+    }
 }
