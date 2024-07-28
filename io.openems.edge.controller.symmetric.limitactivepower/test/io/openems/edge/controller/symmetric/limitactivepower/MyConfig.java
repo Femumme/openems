@@ -78,6 +78,16 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	}
 
 	@Override
+	public String startTime() {
+		return "";
+	}
+
+	@Override
+	public String endTime() {
+		return "";
+	}
+
+	@Override
 	public boolean validatePowerConstraints() {
 		return this.builder.validatePowerConstraints;
 	}

@@ -26,6 +26,15 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "Max Discharge Power [W]", description = "Positive value describing the maximum Discharge Power.")
 	int maxDischargePower();
 
+	@AttributeDefinition(name = "(Optional) Start Time", description = "Start time when the limit should be applied; ISO 8601 format", required = false)
+	String startTime() default "";
+
+	@AttributeDefinition(name = "(Optional) End Time", description = "End time when the limit should be applied; ISO 8601 format", required = false)
+	String endTime() default "";
+
+	@AttributeDefinition(name = "(Optional) Enables UI Widget", description = "Enables UI Widget to change the limit and timeframe.")
+	boolean uiEnabled() default false;
+
 	@AttributeDefinition(name = "Validate applied power Constraints", description = "If this property is 'false' the limitation is not validated. " //
 			+ "Only disable if you know what you are doing. This can break the system!")
 	boolean validatePowerConstraints() default true;
