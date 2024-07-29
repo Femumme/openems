@@ -74,7 +74,7 @@
           </ion-popover>
         </ion-item>
       </td>
-      <td *ngIf="control.type === 'DATE_PICKER' && control?.properties?.clearable">
+      <td *ngIf="control.type === 'DATE_PICKER' && control?.properties?.clearable && !!formGroup.value[controlName]?.trim()">
         <ion-item
           class="ion-justify-content-center"
           [formGroup]="formGroup">

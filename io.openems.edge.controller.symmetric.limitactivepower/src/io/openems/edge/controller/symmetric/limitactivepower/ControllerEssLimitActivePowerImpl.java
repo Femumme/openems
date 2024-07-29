@@ -77,14 +77,14 @@ public class ControllerEssLimitActivePowerImpl extends AbstractOpenemsComponent
 
     @Override
     public void run() throws OpenemsNamedException {
-        if (config.mode() == Mode.MANUAL_OFF) {
+        if (this.config.mode() == Mode.MANUAL_OFF) {
             return;
         }
 
         ManagedSymmetricEss ess = this.componentManager.getComponent(this.config.ess_id());
 
-        var startTime = getDateFromIsoString(config.startTime());
-        var endTime = getDateFromIsoString(config.endTime());
+        var startTime = getDateFromIsoString(this.config.startTime());
+        var endTime = getDateFromIsoString(this.config.endTime());
         var currentTime = new Date();
         if (startTime != null && startTime.after(currentTime)) {
             // do nothing
