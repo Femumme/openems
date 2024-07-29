@@ -5,6 +5,7 @@
     "apply": "Aplikovat",
     "autarchy": "Soběstačnost",
     "automatic": "Automaticky",
+    "onDateAtTime": "dne {{date}} v {{time}}",
     "cancel": "zrušení",
     "capacity": "Kapacita",
     "changeAccepted": "Změna byla přijata",
@@ -216,6 +217,12 @@
           "sellToGridPowerLimit": "Poplatek výše",
           "continuousSellToGridPower": "Výboj níže",
           "relationError": "Limit poplatku musí být vyšší než limit vybití"
+        },
+        "LimitActivePower": {
+          "chargeLimit": "Limit nabíjení",
+          "dischargeLimit": "Limit vybíjení",
+          "endTime": "Čas ukončení",
+          "startTime": "Čas zahájení"
         },
         "Peakshaving": {
           "asymmetricInfo": "Zadané hodnoty výkonu se vztahují k jednotlivým fázím. Je nastavena na nejvíce namáhanou fázi.",

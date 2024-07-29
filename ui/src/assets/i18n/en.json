@@ -61,6 +61,12 @@
           "continuousSellToGridPower": "Discharge below",
           "relationError": "Charge limit must be greater than the Discharge limit"
         },
+        "LimitActivePower": {
+          "chargeLimit": "Charge Limit",
+          "dischargeLimit": "Discharge Limit",
+          "endTime": "End Time",
+          "startTime": "Start Time"
+        },
         "Peakshaving": {
           "asymmetricInfo": "The entered performance values ​​refer to individual phases. It is adjusted to the most stressed phase.",
           "endDate": "End date",
@@ -547,6 +553,7 @@
       "netherlands": "Netherlands",
       "switzerland": "Switzerland"
     },
+    "onDateAtTime": "on {{date}} at {{time}}",
     "yes": "Yes",
     "no": "No",
     "value": "value",

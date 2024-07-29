@@ -1,0 +1,58 @@
+<oe-modal [title]="this.component.alias" [component]="component" [formGroup]="formGroup" *ngIf="isInitialized">
+
+  <oe-modal-line [name]="'General.state' | translate"
+                 [channelAddress]="component.id + '/_PropertyMode'"
+                 [converter]="CONVERT_MANUAL_ON_OFF">
+  </oe-modal-line>
+
+
+  <ng-container *ngIf="propertyMode === 'MANUAL_ON'">
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.chargeLimit' | translate"
+                   [channelAddress]="component.id + '/_PropertyMaxChargePower'"
+                   [converter]="CONVERT_WATT_TO_KILOWATT"
+    ></oe-modal-line>
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.dischargeLimit' | translate"
+                   [channelAddress]="component.id + '/_PropertyMaxDischargePower'"
+                   [converter]="CONVERT_WATT_TO_KILOWATT"
+    ></oe-modal-line>
+
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.startTime' | translate"
+                   [channelAddress]="component.id + '/_PropertyStartTime'"
+                   [converter]="CONVERT_DATE"
+                   ></oe-modal-line>
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.endTime' | translate"
+                   [channelAddress]="component.id + '/_PropertyEndTime'"
+                   [converter]="CONVERT_DATE"
+                  ></oe-modal-line>
+  </ng-container>
+
+  <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <oe-modal-buttons [formGroup]="formGroup" controlName="mode" [component]="component" [buttons]="[
+    { name: ('General.on' | translate), value: 'MANUAL_ON', icon: {color:'success', name: 'power-outline'}},
+    { name: ('General.off' | translate), value: 'MANUAL_OFF', icon: {color:'primary', name: 'power-outline'}}]">
+  </oe-modal-buttons>
+
+  <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <ng-container [formGroup]="formGroup" *ngIf="formGroup.value.mode === 'MANUAL_ON'">
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.chargeLimit'| translate" [formGroup]="formGroup"
+                   controlName="maxChargePower"
+                   [control]="{ type: 'INPUT' }">
+    </oe-modal-line>
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.dischargeLimit'| translate" [formGroup]="formGroup"
+                   controlName="maxDischargePower"
+                   [control]="{ type: 'INPUT' }">
+    </oe-modal-line>
+
+    <oe-modal-horizontal-line></oe-modal-horizontal-line>
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.startTime'| translate" [formGroup]="formGroup"
+                   controlName="startTime"
+                   [control]="{ type: 'DATE_PICKER', properties: {clearable: true}}">
+    </oe-modal-line>
+    <oe-modal-line [name]="'Edge.Index.Widgets.LimitActivePower.endTime'| translate" [formGroup]="formGroup"
+                   controlName="endTime"
+                   [control]="{ type: 'DATE_PICKER', properties: {clearable: true}}">
+    </oe-modal-line>
+  </ng-container>
+</oe-modal>

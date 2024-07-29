@@ -32,6 +32,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "(Optional) End Time", description = "End time when the limit should be applied; ISO 8601 format", required = false)
 	String endTime() default "";
 
+	@AttributeDefinition(name = "Mode", description = "Mode, can be on or off")
+	Mode mode() default Mode.MANUAL_ON;
+
 	@AttributeDefinition(name = "(Optional) Enables UI Widget", description = "Enables UI Widget to change the limit and timeframe.")
 	boolean uiEnabled() default false;
 
