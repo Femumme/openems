@@ -70,6 +70,18 @@
           </ion-popover>
         </ion-item>
       </td>
+      <td *ngIf="control.type === 'DATE_PICKER' && control?.properties?.clearable && !!formGroup.value[controlName]?.trim()">
+        <ion-item
+          class="ion-justify-content-center"
+          [formGroup]="formGroup">
+          <ion-button
+            type="button"
+            (click)="formGroup.controls[controlName].setValue(''); formGroup.controls[controlName].markAsDirty()"
+          >
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-button>
+        </ion-item>
+      </td>
     </ng-container>
 
     <ng-container *ngTemplateOutlet="contentTpl"></ng-container>
