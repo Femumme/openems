@@ -1,0 +1,27 @@
+<ng-container *ngIf="isInitialized && uiEnabled">
+  <oe-flat-widget (click)="presentModal()" [icon]="{name:'swap-vertical-outline'}" [title]="component.alias">
+    <oe-flat-widget-line [name]="'General.state' | translate"
+                         [channelAddress]="component.id + '/_PropertyMode'"
+                         [converter]="CONVERT_MANUAL_ON_OFF">
+    </oe-flat-widget-line>
+
+    <ng-container *ngIf="propertyMode === 'MANUAL_ON'">
+      <oe-flat-widget-line [name]="'Edge.Index.Widgets.LimitActivePower.chargeLimit' | translate"
+                           [channelAddress]="component.id + '/_PropertyMaxChargePower'"
+                           [converter]="CONVERT_WATT_TO_KILOWATT"
+      ></oe-flat-widget-line>
+      <oe-flat-widget-line [name]="'Edge.Index.Widgets.LimitActivePower.dischargeLimit' | translate"
+                           [channelAddress]="component.id + '/_PropertyMaxDischargePower'"
+                           [converter]="CONVERT_WATT_TO_KILOWATT"
+      ></oe-flat-widget-line>
+      <oe-flat-widget-line [name]="'Edge.Index.Widgets.LimitActivePower.startTime' | translate"
+                           [channelAddress]="component.id + '/_PropertyStartTime'"
+                           [converter]="CONVERT_DATE"
+      ></oe-flat-widget-line>
+      <oe-flat-widget-line [name]="'Edge.Index.Widgets.LimitActivePower.endTime' | translate"
+                           [channelAddress]="component.id + '/_PropertyEndTime'"
+                           [converter]="CONVERT_DATE"
+      ></oe-flat-widget-line>
+    </ng-container>
+  </oe-flat-widget>
+</ng-container>

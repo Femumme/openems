@@ -36,6 +36,7 @@ export enum WidgetFactory {
     'Controller.Io.FixDigitalOutput',
     'Controller.IO.HeatingElement',
     'Controller.Io.HeatPump.SgReady',
+    'Controller.Symmetric.LimitActivePower',
     'Controller.Symmetric.PeakShaving',
     'Controller.TimeslotPeakshaving',
     'Evcs.Cluster.PeakShaving',

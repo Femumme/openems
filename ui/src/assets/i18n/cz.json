@@ -224,6 +224,12 @@
           "endTime": "Čas ukončení",
           "startTime": "Čas začátku"
         },
+        "LimitActivePower": {
+          "chargeLimit": "Limit nabíjení",
+          "dischargeLimit": "Limit vybíjení",
+          "endTime": "Čas ukončení",
+          "startTime": "Čas zahájení"
+        },
         "Peakshaving": {
           "asymmetricInfo": "Zadané hodnoty výkonu se vztahují k jednotlivým fázím. Je nastavena na nejvíce namáhanou fázi.",
           "endDate": "Datum Ukončení",

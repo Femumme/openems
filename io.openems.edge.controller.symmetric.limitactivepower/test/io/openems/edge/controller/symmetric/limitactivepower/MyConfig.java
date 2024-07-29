@@ -88,6 +88,16 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	}
 
 	@Override
+	public Mode mode() {
+		return Mode.MANUAL_ON;
+	}
+
+	@Override
+	public boolean uiEnabled() {
+		return false;
+	}
+
+	@Override
 	public boolean validatePowerConstraints() {
 		return this.builder.validatePowerConstraints;
 	}

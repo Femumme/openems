@@ -1,17 +1,18 @@
 // @ts-strict-ignore
-import { formatNumber } from "@angular/common";
-import { TranslateService } from "@ngx-translate/core";
-import { ChartDataset } from "chart.js";
-import { saveAs } from "file-saver-es";
-import { DefaultTypes } from "src/app/shared/service/defaulttypes";
-import { JsonrpcResponseSuccess } from "../jsonrpc/base";
-import { Base64PayloadResponse } from "../jsonrpc/response/base64PayloadResponse";
-import { QueryHistoricTimeseriesEnergyResponse } from "../jsonrpc/response/queryHistoricTimeseriesEnergyResponse";
-import { ChannelAddress, Currency, EdgeConfig } from "../shared";
+import {formatNumber} from "@angular/common";
+import {TranslateService} from "@ngx-translate/core";
+import {ChartDataset} from "chart.js";
+import {saveAs} from "file-saver-es";
+import {DefaultTypes} from "src/app/shared/service/defaulttypes";
+import {JsonrpcResponseSuccess} from "../jsonrpc/base";
+import {Base64PayloadResponse} from "../jsonrpc/response/base64PayloadResponse";
+import {QueryHistoricTimeseriesEnergyResponse} from "../jsonrpc/response/queryHistoricTimeseriesEnergyResponse";
+import {ChannelAddress, Currency, EdgeConfig} from "../shared";
 
 export class Utils {
 
-  constructor() { }
+  constructor() {
+  }
 
   /**
    * Returns true for last element of array
@@ -295,7 +296,11 @@ export class Utils {
    * @param value the value from passed value in html
    * @returns converted value
    */
-  public static CONVERT_DATE = (value: Date | number | string): string => {
+  public static CONVERT_DATE = (value?: Date | number | string): string => {
+    if (!value ||(typeof value === 'string' && !value.trim())) {
+      return '-';
+    }
+
     const date = new Date(value);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   };
@@ -369,17 +374,40 @@ export class Utils {
   };
 
   /**
+   * Converts states 'MANUAL', 'AUTO' and 'OFF' to translated strings.
+   *
+   * @param value the value from passed value in html
+   * @returns converted value
+   */
+  public static CONVERT_MANUAL_AUTO_OFF = (translate: TranslateService) => {
+    return (value: DefaultTypes.ManualOffAuto): string => {
+      if (value === 'MANUAL') {
+        return translate.instant('General.manually');
+      } else if (value === 'OFF') {
+        return translate.instant('General.off');
+      } else if (value === 'AUTO') {
+        return translate.instant('General.auto');
+      } else {
+        return '-';
+      }
+    };
+  };
+
+  /**
    * Takes a power value and extracts the information if it represents Charge or Discharge.
    *
    * @param translate the translate service
    * @param power the power
    * @returns an object with charge/discharge information and power value
    */
-  public static convertChargeDischargePower(translate: TranslateService, power: number): { name: string, value: number } {
+  public static convertChargeDischargePower(translate: TranslateService, power: number): {
+    name: string,
+    value: number
+  } {
     if (power >= 0) {
-      return { name: translate.instant("General.dischargePower"), value: power };
+      return {name: translate.instant("General.dischargePower"), value: power};
     } else {
-      return { name: translate.instant("General.chargePower"), value: power * -1 };
+      return {name: translate.instant("General.chargePower"), value: power * -1};
     }
   }
 
@@ -414,7 +442,7 @@ export class Utils {
       const date: Date = new Date();
       date.setHours(0, 0, 0, 0);
       date.setMinutes(value);
-      return date.toLocaleTimeString(translate.getBrowserCultureLang(), { hour: "2-digit", minute: "2-digit" });
+      return date.toLocaleTimeString(translate.getBrowserCultureLang(), {hour: "2-digit", minute: "2-digit"});
     };
   };
 
@@ -537,9 +565,9 @@ export class Utils {
         return 100;
       } else {
         return /* min 0 */ Math.max(0,
-        /* max 100 */ Math.min(100,
-          /* calculate autarchy */(1 - buyFromGrid / consumptionActivePower) * 100,
-        ));
+          /* max 100 */ Math.min(100,
+            /* calculate autarchy */(1 - buyFromGrid / consumptionActivePower) * 100,
+          ));
       }
 
     } else {
@@ -587,14 +615,14 @@ export class Utils {
   }
 
   /**
- * Calculates the total other consumption.
- * other consumption = total Consumption - (total evcs consumption) - (total consumptionMeter consumption)
- *
- * @param energyValues the energyValues, retrieved from {@link QueryHistoricTimeseriesEnergyRequest}
- * @param evcsComponents the evcsComponents
- * @param consumptionMeterComponents the consumptionMeterComponents
- * @returns the other consumption
- */
+   * Calculates the total other consumption.
+   * other consumption = total Consumption - (total evcs consumption) - (total consumptionMeter consumption)
+   *
+   * @param energyValues the energyValues, retrieved from {@link QueryHistoricTimeseriesEnergyRequest}
+   * @param evcsComponents the evcsComponents
+   * @param consumptionMeterComponents the consumptionMeterComponents
+   * @returns the other consumption
+   */
   public static calculateOtherConsumptionTotal(energyValues: QueryHistoricTimeseriesEnergyResponse, evcsComponents: EdgeConfig.Component[], consumptionMeterComponents: EdgeConfig.Component[]): number {
 
     let totalEvcsConsumption: number = 0;
@@ -674,6 +702,7 @@ export enum ChartAxis {
   RIGHT = "right",
   RIGHT_2 = "right2",
 }
+
 export namespace HistoryUtils {
 
   export const CONVERT_WATT_TO_KILOWATT_OR_KILOWATTHOURS = (data: number[]): number[] | null[] => {
@@ -681,11 +710,11 @@ export namespace HistoryUtils {
   };
 
   /**
- * Creates an empty dataset for ChartJS with translated error message.
- *
- * @param translate the TranslateService
- * @returns a dataset
- */
+   * Creates an empty dataset for ChartJS with translated error message.
+   *
+   * @param translate the TranslateService
+   * @returns a dataset
+   */
   export function createEmptyDataset(translate: TranslateService): ChartDataset[] {
     return [{
       label: translate.instant("Edge.History.noData"),
@@ -777,10 +806,10 @@ export namespace HistoryUtils {
   }
 
   /**
- * Data from a subscription to Channel or from a historic data query.
- *
- * TODO Lukas refactor
- */
+   * Data from a subscription to Channel or from a historic data query.
+   *
+   * TODO Lukas refactor
+   */
   export type ChannelData = {
     [name: string]: number[]
   };

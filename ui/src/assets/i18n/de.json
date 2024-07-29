@@ -66,6 +66,12 @@
           "endTime": "End-Zeit",
           "startTime": "Start-Zeit"
         },
+        "LimitActivePower": {
+          "chargeLimit": "Lade-Limit",
+          "dischargeLimit": "Entlade-Limit",
+          "endTime": "End-Zeit",
+          "startTime": "Start-Zeit"
+        },
         "Peakshaving": {
           "asymmetricInfo": "Eingetragene Leistungswerte beziehen sich auf einzelne Phasen. Es wird auf die jeweils am stärksten belastete Phase ausgeregelt.",
           "endDate": "End Datum",
@@ -1018,3 +1024,4 @@
     "FUNCTIONALITY_TEMPORARILY_NOT_AVAILABLE": "Diese Funktion ist vorübergehend in der App nicht verfügbar, verwenden Sie bitte dafür die Web-App."
   }
 }
+

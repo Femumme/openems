@@ -61,6 +61,12 @@
           "continuousSellToGridPower": "以下で放電します",
           "relationError": "充電制限は、排出制限よりも大きくなければなりません"
         },
+        "LimitActivePower": {
+          "chargeLimit": "充電制限",
+          "dischargeLimit": "放電制限",
+          "endTime": "終了時間",
+          "startTime": "開始時間"
+        },
         "Timeframe": {
           "targetSoc": "目標の充電状態",
           "endTime": "終了時間",

@@ -209,6 +209,12 @@
           "continuousSellToGridPower": "Descarga a continuación",
           "relationError": "El límite de carga debe ser mayor que el límite de descarga"
         },
+        "LimitActivePower": {
+          "chargeLimit": "Límite de carga",
+          "dischargeLimit": "Límite de descarga",
+          "endTime": "Hora de fin",
+          "startTime": "Hora de inicio"
+        },
         "Timeframe": {
           "targetSoc": "Estado de carga objetivo",
           "endTime": "Hora de finalización",

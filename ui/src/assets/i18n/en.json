@@ -66,6 +66,12 @@
           "endTime": "End Time",
           "startTime": "Start Time"
         },
+        "LimitActivePower": {
+          "chargeLimit": "Charge Limit",
+          "dischargeLimit": "Discharge Limit",
+          "endTime": "End Time",
+          "startTime": "Start Time"
+        },
         "Peakshaving": {
           "asymmetricInfo": "The entered performance values ​​refer to individual phases. It is adjusted to the most stressed phase.",
           "endDate": "End date",
@@ -1021,3 +1027,4 @@
     "FUNCTIONALITY_TEMPORARILY_NOT_AVAILABLE": "This function is temporarily not available in the app, please use the web app instead."
   }
 }
+
