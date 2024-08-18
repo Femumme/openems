@@ -96,16 +96,16 @@ public class ControllerPvInverterSellToGridLimitImpl extends AbstractOpenemsComp
 		// Calculates required charge/discharge power
 		var calculatedPower = this.calculateRequiredPower(pvInverter, meter, this.config.asymmetricMode());
 
-		if (Math.abs(this.lastSetLimit) > 100 && Math.abs(calculatedPower) > 100 && Math
-				.abs(this.lastSetLimit - calculatedPower) > Math.abs(this.lastSetLimit) * DEFAULT_MAX_ADJUSTMENT_RATE) {
-			if (this.lastSetLimit > calculatedPower) {
-				calculatedPower = this.lastSetLimit - (int) Math.abs(this.lastSetLimit * DEFAULT_MAX_ADJUSTMENT_RATE);
-			} else {
-				calculatedPower = this.lastSetLimit + (int) Math.abs(this.lastSetLimit * DEFAULT_MAX_ADJUSTMENT_RATE);
-			}
-		}
-		// store lastSetLimit
-		this.lastSetLimit = calculatedPower;
+//		if (Math.abs(this.lastSetLimit) > 100 && Math.abs(calculatedPower) > 100 && Math
+//				.abs(this.lastSetLimit - calculatedPower) > Math.abs(this.lastSetLimit) * DEFAULT_MAX_ADJUSTMENT_RATE) {
+//			if (this.lastSetLimit > calculatedPower) {
+//				calculatedPower = this.lastSetLimit - (int) Math.abs(this.lastSetLimit * DEFAULT_MAX_ADJUSTMENT_RATE);
+//			} else {
+//				calculatedPower = this.lastSetLimit + (int) Math.abs(this.lastSetLimit * DEFAULT_MAX_ADJUSTMENT_RATE);
+//			}
+//		}
+//		// store lastSetLimit
+//		this.lastSetLimit = calculatedPower;
 
 		// set result
 		pvInverter.setActivePowerLimit(calculatedPower);
