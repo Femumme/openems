@@ -373,25 +373,6 @@ export class Utils {
     };
   };
 
-  /**
-   * Converts states 'MANUAL', 'AUTO' and 'OFF' to translated strings.
-   *
-   * @param value the value from passed value in html
-   * @returns converted value
-   */
-  public static CONVERT_MANUAL_AUTO_OFF = (translate: TranslateService) => {
-    return (value: DefaultTypes.ManualOffAuto): string => {
-      if (value === 'MANUAL') {
-        return translate.instant('General.manually');
-      } else if (value === 'OFF') {
-        return translate.instant('General.off');
-      } else if (value === 'AUTO') {
-        return translate.instant('General.auto');
-      } else {
-        return '-';
-      }
-    };
-  };
 
   /**
    * Takes a power value and extracts the information if it represents Charge or Discharge.
