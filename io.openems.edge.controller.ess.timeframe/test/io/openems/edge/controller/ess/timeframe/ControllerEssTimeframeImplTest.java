@@ -73,9 +73,11 @@ public class ControllerEssTimeframeImplTest {
         assertEquals(Integer.valueOf(-1000), //
                 ControllerEssTimeframeImpl.getAcPower(
                         ess,
+                        null,
                         0,
                         50,
                         1000,
+                        0,
                         0,
                         this.getIso8601String(this.now()),
                         this.getIso8601String(this.inOneHour())
@@ -84,8 +86,10 @@ public class ControllerEssTimeframeImplTest {
 
         Integer acPower = ControllerEssTimeframeImpl.getAcPower(
                 ess,
+                null,
                 0,
                 50,
+                0,
                 0,
                 0,
                 this.getIso8601String(this.now()),
@@ -108,10 +112,12 @@ public class ControllerEssTimeframeImplTest {
         assertEquals(Integer.valueOf(1000), //
                 ControllerEssTimeframeImpl.getAcPower(
                         ess,
+                        null,
                         0,
                         50,
                         0,
                         1000,
+                        0,
                         this.getIso8601String(this.now()),
                         this.getIso8601String(this.inOneHour())
                 ));

@@ -26,9 +26,6 @@ import io.openems.edge.ess.power.api.Relationship;
     @AttributeDefinition(name = "Ess-ID", description = "ID of Ess device.")
     String ess_id();
 
-    @AttributeDefinition(name = "Grid Meter-ID", description = "ID of grid meter.", required = false)
-    String grid_meter_id() default "";
-
     @AttributeDefinition(name = "Fallback ESS Capacity", description = "Capacity of the ESS in Wh. Serves as Fallback, if ESS capacity can not be read from ESS.", required = false)
     int ess_capacity() default 0;
 

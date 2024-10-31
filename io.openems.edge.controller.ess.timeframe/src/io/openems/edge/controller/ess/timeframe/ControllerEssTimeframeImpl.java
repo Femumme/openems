@@ -1,6 +1,7 @@
 package io.openems.edge.controller.ess.timeframe;
 
 import io.openems.common.exceptions.InvalidValueException;
+import io.openems.edge.common.sum.Sum;
 import io.openems.edge.meter.api.ElectricityMeter;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentContext;
@@ -48,11 +49,12 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
     @Reference
     private ConfigurationAdmin cm;
 
+    @Reference
+    private Sum sum;
+
+
     @Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
     private ManagedSymmetricEss ess;
-
-    @Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
-    private ElectricityMeter meter;
 
     private Config config;
 
@@ -88,7 +90,6 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
 
     private boolean applyConfig(ComponentContext context, Config config) {
         this.config = config;
-        OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "meter", config.grid_meter_id());
         return OpenemsComponent.updateReferenceFilter(this.cm, this.servicePid(), "ess", config.ess_id());
     }
 
@@ -107,7 +108,7 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
                     // Apply Active-Power Set-Point
                     var acPower = getAcPower(
                             this.ess,
-                            this.meter,
+                            this.sum,
                             this.config.ess_capacity(),
                             this.config.targetSoC(),
                             this.config.maxChargePower(),
@@ -140,7 +141,7 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
      * Gets the required AC power set-point for AC-ESS.
      *
      * @param ess                   the {@link ManagedSymmetricEss}
-     * @param meter                   the {@link ElectricityMeter}
+     * @param sum                   the {@link Sum}
      * @param fallback_ess_capacity capacity of the ess, used as fallback if automatic determination does not work
      * @param targetSoC             the target SoC
      * @param maxChargePower        max power to charge
@@ -152,7 +153,7 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
      */
     protected static Integer getAcPower(
             ManagedSymmetricEss ess,
-            ElectricityMeter meter,
+            Sum sum,
             Integer fallback_ess_capacity,
             int targetSoC,
             int maxChargePower,
@@ -184,10 +185,19 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
                 requestedPower = Math.min(requestedPower, maxDischargePower);
             }
 
-            if (meter != null && maxBuyFromGridPower != 0) {
-                int gridPower = meter.getActivePower().getOrError();
-                int maxCharge = ess.getActivePower().get() + gridPower - maxBuyFromGridPower;
-                requestedPower = Math.max(requestedPower, maxCharge);
+            if (sum != null && maxBuyFromGridPower != 0) {
+                int consumption = sum.getConsumptionActivePower().getOrError();
+                int production = sum.getProductionActivePower().getOrError();
+
+                int maxPower = consumption - production - maxBuyFromGridPower;
+
+                requestedPower = Math.max(requestedPower, maxPower);
+
+                // smooth out transitions to next values
+                int currentPower = sum.getEssActivePower().getOrError();
+                int diff = requestedPower - currentPower;
+
+                requestedPower = currentPower + (int) (diff * Math.abs((double) diff / requestedPower));
             }
 
             return requestedPower;
