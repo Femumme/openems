@@ -11,7 +11,6 @@
     "changeAccepted": "Wijziging geaccepteerd",
     "changeFailed": "Wijziging mislukt",
     "chargeDischarge": "Debet/ontlaad",
-    "chargePower": "Laad vermogen",
     "componentCount": "Aantal componenten",
     "componentInactive": "Component is inactief!",
     "connectionLost": "Verbinding verbroken. Probeer opnieuw verbinding te maken.",
@@ -22,7 +21,6 @@
     "digitalInputs": "Digitale Ingangen",
     "numberOfComponents": "aantal componenten",
     "directConsumption": "Directe consumptie",
-    "dischargePower": "Ontlaad vermogen",
     "fault": "Fout",
     "grid": "Net",
     "gridBuy": "Netafname",
@@ -90,7 +88,9 @@
       "MINUTES": "Minuten",
       "DAY": "Dag",
       "DAYS": "Dagen"
-    }
+    },
+    "DISCHARGE": "Afvoer",
+    "CHARGE": "Laden"
   },
   "Menu": {
     "accessLevel": "Toegangsniveau",

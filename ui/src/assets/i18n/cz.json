@@ -12,7 +12,6 @@
     "changeAccepted": "Změna byla přijata",
     "changeFailed": "Změna se nezdařila",
     "chargeDischarge": "Debetní/vybíjení",
-    "chargePower": "Nabíjecí výkon",
     "componentCount": "Počet komponentů",
     "componentInactive": "Komponenta je neaktivní!",
     "connectionLost": "Spojení ztraceno. Pokouší se znovu připojit.",
@@ -24,7 +23,6 @@
     "digitalInputs": "Digitální vstupy",
     "numberOfComponents": "Počet komponentů",
     "directConsumption": "Přímá spotřeba",
-    "dischargePower": "Vybíjecí výkon",
     "fault": "Chyba",
     "grid": "Síť",
     "gridBuy": "Nákup ze sítě",
@@ -98,7 +96,9 @@
       "MINUTES": "Minuty",
       "DAY": "Den",
       "DAYS": "Dny"
-    }
+    },
+    "DISCHARGE": "Vypouštění",
+    "CHARGE": "Načítání"
   },
   "Menu": {
     "accessLevel": "Úroveň přístupu",
@@ -550,7 +550,7 @@
     "currentDevelopments": "Aktuální vývoj",
     "developed": "Toto uživatelské rozhraní bylo vyvinuto jako open-source software.",
     "faq": "Často kladené otázky (FAQ)",
-    "language": "Zvolte jazyk:",
+    "language": "Select language:",
     "openEMS": "Více o OpenEMS",
     "patchnotes": "Změny v monitorování tohoto sestavení",
     "info": "Jazyk nemůže být trvale změněn v místním online monitorování z technických důvodů."
