@@ -1,11 +1,12 @@
 // @ts-strict-ignore
-import {Component} from '@angular/core';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
-import { AbstractModal } from 'src/app/shared/components/modal/abstractModal';
-import {ChannelAddress, CurrentData, Utils} from 'src/app/shared/shared';
+import {Component} from "@angular/core";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
+import { AbstractModal } from "src/app/shared/components/modal/abstractModal";
+import {ChannelAddress, CurrentData, Utils} from "src/app/shared/shared";
 
 @Component({
-  templateUrl: './modal.html',
+  templateUrl: "./modal.html",
+  standalone: false,
 })
 export class ModalComponent extends AbstractModal {
 
@@ -27,14 +28,14 @@ export class ModalComponent extends AbstractModal {
   }
 
   protected override onCurrentData(currentData: CurrentData) {
-    this.targetSoC = currentData.allComponents[this.component.id + '/_PropertyTargetSoC'];
+    this.targetSoC = currentData.allComponents[this.component.id + "/_PropertyTargetSoC"];
 
-    const start = currentData.allComponents[this.component.id + '/_PropertyStartTime'];
-    const end = currentData.allComponents[this.component.id + '/_PropertyEndTime'];
+    const start = currentData.allComponents[this.component.id + "/_PropertyStartTime"];
+    const end = currentData.allComponents[this.component.id + "/_PropertyEndTime"];
 
-    this.startTime = start ? Utils.CONVERT_DATE(start) : '-';
-    this.endTime = end ? Utils.CONVERT_DATE(end) : '-';
-    this.propertyMode = currentData.allComponents[this.component.id + '/_PropertyMode'] ?? 'OFF';
+    this.startTime = start ? Utils.CONVERT_DATE(start) : "-";
+    this.endTime = end ? Utils.CONVERT_DATE(end) : "-";
+    this.propertyMode = currentData.allComponents[this.component.id + "/_PropertyMode"] ?? "OFF";
   }
 
   protected override getFormGroup(): FormGroup {

@@ -1,11 +1,12 @@
 // @ts-strict-ignore
-import {Component} from '@angular/core';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
-import { AbstractModal } from 'src/app/shared/components/modal/abstractModal';
-import {ChannelAddress, CurrentData, Utils} from 'src/app/shared/shared';
+import {Component} from "@angular/core";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
+import { AbstractModal } from "src/app/shared/components/modal/abstractModal";
+import {ChannelAddress, CurrentData, Utils} from "src/app/shared/shared";
 
 @Component({
-  templateUrl: './modal.html',
+  templateUrl: "./modal.html",
+  standalone: false,
 })
 export class ModalComponent extends AbstractModal {
   protected override getChannelAddresses(): ChannelAddress[] {
@@ -25,7 +26,7 @@ export class ModalComponent extends AbstractModal {
   public readonly CONVERT_DATE = Utils.CONVERT_DATE;
 
   protected override onCurrentData(currentData: CurrentData) {
-    this.propertyMode = currentData.allComponents[this.component.id + '/_PropertyMode'];
+    this.propertyMode = currentData.allComponents[this.component.id + "/_PropertyMode"];
   }
 
   protected override getFormGroup(): FormGroup {

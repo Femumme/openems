@@ -1,13 +1,14 @@
 // @ts-strict-ignore
-import {Component} from '@angular/core';
-import { AbstractFlatWidget } from 'src/app/shared/components/flat/abstract-flat-widget';
-import {ChannelAddress, CurrentData, Utils} from 'src/app/shared/shared';
+import {Component} from "@angular/core";
+import {AbstractFlatWidget} from "src/app/shared/components/flat/abstract-flat-widget";
+import {ChannelAddress, CurrentData, Utils} from "src/app/shared/shared";
 
-import {ModalComponent} from '../modal/modal';
+import {ModalComponent} from "../modal/modal";
 
 @Component({
-  selector: 'Controller_LimitActivePowerSymmetric',
-  templateUrl: './flat.html',
+  selector: "Controller_LimitActivePowerSymmetric",
+  templateUrl: "./flat.html",
+  standalone: false,
 })
 export class FlatComponent extends AbstractFlatWidget {
 
@@ -30,8 +31,8 @@ export class FlatComponent extends AbstractFlatWidget {
   public readonly CONVERT_DATE = Utils.CONVERT_DATE;
 
   protected override onCurrentData(currentData: CurrentData) {
-    this.propertyMode = currentData.allComponents[this.component.id + '/_PropertyMode'];
-    this.uiEnabled = currentData.allComponents[this.component.id + '/_PropertyUiEnabled'];
+    this.propertyMode = currentData.allComponents[this.component.id + "/_PropertyMode"];
+    this.uiEnabled = currentData.allComponents[this.component.id + "/_PropertyUiEnabled"];
   }
 
   async presentModal() {

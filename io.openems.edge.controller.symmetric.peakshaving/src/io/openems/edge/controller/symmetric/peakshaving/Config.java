@@ -29,5 +29,11 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "Recharge power", description = "If grid purchase power is below this value battery is recharged.")
 	int rechargePower();
 
+	@AttributeDefinition(name = "Lower Limit SoC", description = "Lower Limit of the SoC Range. Defaults to 0")
+	int socInfimum() default 0;
+
+	@AttributeDefinition(name = "Upper Limit SoC", description = "Upper Limit of the SoC Range. Defaults to 100")
+	int socSupremum() default 100;
+
 	String webconsole_configurationFactory_nameHint() default "Controller Peak-Shaving Symmetric [{id}]";
 }
