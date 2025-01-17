@@ -92,13 +92,13 @@ public class ControllerEssPeakShavingImpl extends AbstractOpenemsComponent
             /*
              * Peak-Shaving
              */
-            ess.setActivePowerGreaterOrEquals(gridPower - this.config.peakShavingPower());
+            ess.setActivePowerLessOrEquals(gridPower - this.config.peakShavingPower());
 
         } else if (gridPower <= this.config.rechargePower()) {
             /*
              * Recharge
              */
-            ess.setActivePowerLessOrEquals(gridPower - this.config.rechargePower());
+            ess.setActivePowerGreaterOrEquals(gridPower - this.config.rechargePower());
         } else {
             /*
              * Battery On Hold

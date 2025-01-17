@@ -3,6 +3,10 @@ package io.openems.edge.edge2edge.ess;
 import java.util.List;
 import java.util.function.Consumer;
 
+import io.openems.edge.ess.api.HybridEss;
+import io.openems.edge.timedata.api.Timedata;
+import io.openems.edge.timedata.api.TimedataProvider;
+import io.openems.edge.timedata.api.utils.CalculateEnergyFromPower;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -35,110 +39,132 @@ import io.openems.edge.ess.power.api.Power;
 
 @Designate(ocd = Config.class, factory = true)
 @Component(//
-		name = "Edge2Edge.Ess", //
-		immediate = true, //
-		configurationPolicy = ConfigurationPolicy.REQUIRE //
+        name = "Edge2Edge.Ess", //
+        immediate = true, //
+        configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
 public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmetricEss, AsymmetricEss, SymmetricEss,
-		Edge2EdgeEss, Edge2Edge, ModbusComponent, OpenemsComponent {
+        Edge2EdgeEss, Edge2Edge, ModbusComponent, TimedataProvider, OpenemsComponent {
 
-	@Reference
-	private ConfigurationAdmin cm;
+    @Reference
+    private ConfigurationAdmin cm;
 
-	@Reference
-	private Power power;
+    @Reference
+    private Power power;
 
-	@Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
-	protected void setModbus(BridgeModbus modbus) {
-		super.setModbus(modbus);
-	}
+    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
+    private volatile Timedata timedata = null;
 
-	public Edge2EdgeEssImpl() {
-		super(//
-				List.of(//
-						OpenemsComponent::getModbusSlaveNatureTable, //
-						SymmetricEss::getModbusSlaveNatureTable, //
-						AsymmetricEss::getModbusSlaveNatureTable, //
-						ManagedSymmetricEss::getModbusSlaveNatureTable, //
-						StartStoppable::getModbusSlaveNatureTable //
-				), //
-				OpenemsComponent.ChannelId.values(), //
-				ModbusComponent.ChannelId.values(), //
-				Edge2Edge.ChannelId.values(), //
-				SymmetricEss.ChannelId.values(), //
-				AsymmetricEss.ChannelId.values(), //
-				ManagedSymmetricEss.ChannelId.values(), //
-				StartStoppable.ChannelId.values(), //
-				Edge2EdgeEss.ChannelId.values() //
-		);
-		this._setMaxApparentPower(Integer.MAX_VALUE); // has no effect, as long as AllowedCharge/DischargePower are null
-	}
+    private final CalculateEnergyFromPower calculateChargeEnergy = new CalculateEnergyFromPower(this,
+            SymmetricEss.ChannelId.ACTIVE_CHARGE_ENERGY);
+    private final CalculateEnergyFromPower calculateDischargeEnergy = new CalculateEnergyFromPower(this,
+            SymmetricEss.ChannelId.ACTIVE_DISCHARGE_ENERGY);
 
-	@Activate
-	private void activate(ComponentContext context, Config config) throws OpenemsException {
-		if (super.activate(context, config.id(), config.alias(), config.enabled(), config.modbusUnitId(), this.cm,
-				"Modbus", config.modbus_id(), config.remoteComponentId(), config.remoteAccessMode())) {
-			return;
-		}
-	}
+    @Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
+    protected void setModbus(BridgeModbus modbus) {
+        super.setModbus(modbus);
+    }
 
-	@Deactivate
-	protected void deactivate() {
-		super.deactivate();
-	}
+    public Edge2EdgeEssImpl() {
+        super(//
+                List.of(//
+                        OpenemsComponent::getModbusSlaveNatureTable, //
+                        SymmetricEss::getModbusSlaveNatureTable, //
+                        AsymmetricEss::getModbusSlaveNatureTable, //
+                        ManagedSymmetricEss::getModbusSlaveNatureTable, //
+                        StartStoppable::getModbusSlaveNatureTable //
+                ), //
+                OpenemsComponent.ChannelId.values(), //
+                ModbusComponent.ChannelId.values(), //
+                Edge2Edge.ChannelId.values(), //
+                SymmetricEss.ChannelId.values(), //
+                AsymmetricEss.ChannelId.values(), //
+                ManagedSymmetricEss.ChannelId.values(), //
+                StartStoppable.ChannelId.values(), //
+                Edge2EdgeEss.ChannelId.values() //
+        );
+        this._setMaxApparentPower(Integer.MAX_VALUE); // has no effect, as long as AllowedCharge/DischargePower are null
+    }
 
-	@Override
-	protected Consumer<Object> getOnUpdateCallback(ModbusSlaveNatureTable modbusSlaveNatureTable, ModbusRecord record) {
-		if (modbusSlaveNatureTable.getNatureClass() == ManagedSymmetricEss.class) {
-			switch (record.getOffset()) {
-			case 0: // "Minimum Power Set-Point"
-				return (value) -> this._setAllowedChargePower(TypeUtils.getAsType(OpenemsType.INTEGER, value));
+    @Activate
+    private void activate(ComponentContext context, Config config) throws OpenemsException {
+        if (super.activate(context, config.id(), config.alias(), config.enabled(), config.modbusUnitId(), this.cm,
+                "Modbus", config.modbus_id(), config.remoteComponentId(), config.remoteAccessMode())) {
+            return;
+        }
+    }
 
-			case 2: // "Maximum Power Set-Point"
-				return (value) -> this._setAllowedDischargePower(TypeUtils.getAsType(OpenemsType.INTEGER, value));
-			}
-		}
-		return null;
-	}
+    @Deactivate
+    protected void deactivate() {
+        super.deactivate();
+    }
 
-	@Override
-	protected io.openems.edge.common.channel.ChannelId getWriteChannelId(ModbusSlaveNatureTable modbusSlaveNatureTable,
-			ModbusRecord record) {
-		if (record instanceof ModbusRecordChannel r) {
-			var c = r.getChannelId();
-			if (c == ManagedSymmetricEss.ChannelId.SET_ACTIVE_POWER_EQUALS) {
-				return Edge2EdgeEss.ChannelId.REMOTE_SET_ACTIVE_POWER_EQUALS;
+    @Override
+    protected Consumer<Object> getOnUpdateCallback(ModbusSlaveNatureTable modbusSlaveNatureTable, ModbusRecord record) {
+        if (modbusSlaveNatureTable.getNatureClass() == ManagedSymmetricEss.class) {
+            switch (record.getOffset()) {
+                case 0: // "Minimum Power Set-Point"
+                    return (value) -> this._setAllowedChargePower(TypeUtils.getAsType(OpenemsType.INTEGER, value));
 
-			} else if (c == ManagedSymmetricEss.ChannelId.SET_REACTIVE_POWER_EQUALS) {
-				return Edge2EdgeEss.ChannelId.REMOTE_SET_REACTIVE_POWER_EQUALS;
-			}
-		}
-		return null;
-	}
+                case 2: // "Maximum Power Set-Point"
+                    return (value) -> this._setAllowedDischargePower(TypeUtils.getAsType(OpenemsType.INTEGER, value));
+            }
+        }
+        return null;
+    }
 
-	@Override
-	public String debugLog() {
-		return "SoC:" + this.getSoc().asString() //
-				+ "|L:" + this.getActivePower().asString() //
-				+ "|Allowed:" + this.getAllowedChargePower().asStringWithoutUnit() + ";" //
-				+ this.getAllowedDischargePower().asString() //
-				+ "|" + this.getGridModeChannel().value().asOptionString();
-	}
+    @Override
+    protected io.openems.edge.common.channel.ChannelId getWriteChannelId(ModbusSlaveNatureTable modbusSlaveNatureTable,
+                                                                         ModbusRecord record) {
+        if (record instanceof ModbusRecordChannel r) {
+            var c = r.getChannelId();
+            if (c == ManagedSymmetricEss.ChannelId.SET_ACTIVE_POWER_EQUALS) {
+                return Edge2EdgeEss.ChannelId.REMOTE_SET_ACTIVE_POWER_EQUALS;
 
-	@Override
-	public Power getPower() {
-		return this.power;
-	}
+            } else if (c == ManagedSymmetricEss.ChannelId.SET_REACTIVE_POWER_EQUALS) {
+                return Edge2EdgeEss.ChannelId.REMOTE_SET_REACTIVE_POWER_EQUALS;
+            }
+        }
+        return null;
+    }
 
-	@Override
-	public void applyPower(int activePower, int reactivePower) throws OpenemsNamedException {
-		this.setRemoteActivePowerEquals((float) activePower);
-		this.setRemoteReactivePowerEquals((float) reactivePower);
-	}
+    @Override
+    public String debugLog() {
+        return "SoC:" + this.getSoc().asString() //
+                + "|L:" + this.getActivePower().asString() //
+                + "|Allowed:" + this.getAllowedChargePower().asStringWithoutUnit() + ";" //
+                + this.getAllowedDischargePower().asString() //
+                + "|" + this.getGridModeChannel().value().asOptionString();
+    }
 
-	@Override
-	public int getPowerPrecision() {
-		return 1;
-	}
+    @Override
+    public Power getPower() {
+        return this.power;
+    }
 
+    @Override
+    public void applyPower(int activePower, int reactivePower) throws OpenemsNamedException {
+        this.setRemoteActivePowerEquals((float) activePower);
+        this.setRemoteReactivePowerEquals((float) reactivePower);
+
+        if (activePower > 0) {
+            // Buy-From-Grid
+            this.calculateChargeEnergy.update(0);
+            this.calculateDischargeEnergy.update(activePower);
+        } else {
+            // Sell-To-Grid
+            this.calculateChargeEnergy.update(activePower * -1);
+            this.calculateDischargeEnergy.update(0);
+        }
+    }
+
+    @Override
+    public int getPowerPrecision() {
+        return 1;
+    }
+
+    @Override
+    public Timedata getTimedata() {
+        return this.timedata;
+    }
 }
