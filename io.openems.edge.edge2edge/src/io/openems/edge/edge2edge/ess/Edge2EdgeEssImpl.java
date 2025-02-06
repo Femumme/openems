@@ -54,8 +54,8 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
     @Reference
     private ConfigurationAdmin cm;
 
-    @Reference
-    private Power power;
+    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
+    private volatile Power power = null;
 
     @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.RELUCTANT, cardinality = ReferenceCardinality.OPTIONAL)
     private volatile Timedata timedata = null;
@@ -144,6 +144,9 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
 
     @Override
     public Power getPower() {
+        if (this.power == null) {
+            return null;
+        }
         return this.power;
     }
 
