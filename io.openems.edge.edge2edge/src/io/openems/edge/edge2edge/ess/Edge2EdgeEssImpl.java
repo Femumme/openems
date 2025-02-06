@@ -3,6 +3,7 @@ package io.openems.edge.edge2edge.ess;
 import java.util.List;
 import java.util.function.Consumer;
 
+import io.openems.edge.common.event.EdgeEventConstants;
 import io.openems.edge.ess.api.HybridEss;
 import io.openems.edge.timedata.api.Timedata;
 import io.openems.edge.timedata.api.TimedataProvider;
@@ -17,6 +18,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
+import org.osgi.service.event.propertytypes.EventTopics;
 import org.osgi.service.metatype.annotations.Designate;
 
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
@@ -40,9 +42,12 @@ import io.openems.edge.ess.power.api.Power;
 @Designate(ocd = Config.class, factory = true)
 @Component(//
         name = "Edge2Edge.Ess", //
-        immediate = true, //
         configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
+@EventTopics({ //
+        EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE, //
+        EdgeEventConstants.TOPIC_CYCLE_BEFORE_CONTROLLERS //
+})
 public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmetricEss, AsymmetricEss, SymmetricEss,
         Edge2EdgeEss, Edge2Edge, ModbusComponent, TimedataProvider, OpenemsComponent {
 
@@ -52,7 +57,7 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
     @Reference
     private Power power;
 
-    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
+    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.RELUCTANT, cardinality = ReferenceCardinality.OPTIONAL)
     private volatile Timedata timedata = null;
 
     private final CalculateEnergyFromPower calculateChargeEnergy = new CalculateEnergyFromPower(this,

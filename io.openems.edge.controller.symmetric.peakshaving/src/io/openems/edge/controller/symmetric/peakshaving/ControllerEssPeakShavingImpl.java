@@ -88,22 +88,20 @@ public class ControllerEssPeakShavingImpl extends AbstractOpenemsComponent
         var gridPower = meter.getActivePower().getOrError()/* current buy-from/sell-to grid */
                 + ess.getActivePower().getOrError() /* current charge/discharge Ess */;
 
+        var calculatedPower = 0;
+
         if (gridPower >= this.config.peakShavingPower()) {
             /*
              * Peak-Shaving
              */
-            ess.setActivePowerLessOrEquals(gridPower - this.config.peakShavingPower());
-
+            calculatedPower = gridPower - this.config.peakShavingPower();
         } else if (gridPower <= this.config.rechargePower()) {
             /*
              * Recharge
              */
-            ess.setActivePowerGreaterOrEquals(gridPower - this.config.rechargePower());
-        } else {
-            /*
-             * Battery On Hold
-             */
-            ess.setActivePowerEquals(0);
+            calculatedPower = gridPower - this.config.rechargePower();
         }
+        ess.setActivePowerEqualsWithPid(calculatedPower);
+        ess.setReactivePowerEquals(0);
     }
 }
