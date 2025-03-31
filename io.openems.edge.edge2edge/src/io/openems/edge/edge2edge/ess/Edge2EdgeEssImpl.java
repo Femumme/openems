@@ -21,8 +21,8 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.propertytypes.EventTopics;
 import org.osgi.service.metatype.annotations.Designate;
 
+import io.openems.common.exceptions.OpenemsError;
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
-import io.openems.common.exceptions.OpenemsException;
 import io.openems.common.types.OpenemsType;
 import io.openems.edge.bridge.modbus.api.BridgeModbus;
 import io.openems.edge.bridge.modbus.api.ModbusComponent;
@@ -38,6 +38,11 @@ import io.openems.edge.ess.api.AsymmetricEss;
 import io.openems.edge.ess.api.ManagedSymmetricEss;
 import io.openems.edge.ess.api.SymmetricEss;
 import io.openems.edge.ess.power.api.Power;
+import com.ghgande.j2mod.modbus.procimg.SimpleRegister;
+import io.openems.edge.bridge.modbus.api.task.FC16WriteRegistersTask;
+import io.openems.edge.bridge.modbus.api.element.UnsignedDoublewordElement;
+import io.openems.edge.bridge.modbus.api.ModbusProtocol;
+import io.openems.common.exceptions.OpenemsException;
 
 @Designate(ocd = Config.class, factory = true)
 @Component(//
@@ -152,8 +157,21 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
 
     @Override
     public void applyPower(int activePower, int reactivePower) throws OpenemsNamedException {
-        this.setRemoteActivePowerEquals((float) activePower);
-        this.setRemoteReactivePowerEquals((float) reactivePower);
+        // Write directly to Modbus registers
+        var activePowerElement = new UnsignedDoublewordElement(0);
+        activePowerElement.setNextWriteValueFromObject(activePower);
+        var reactivePowerElement = new UnsignedDoublewordElement(2);
+        reactivePowerElement.setNextWriteValueFromObject(reactivePower);
+
+        // Get the Modbus bridge and write registers
+        var bridge = this.getBridgeModbus();
+        if (bridge != null) {
+            // Write active power registers
+            var protocol = this.getModbusProtocol();
+            protocol.addTask(new FC16WriteRegistersTask(0, activePowerElement));
+            // Write reactive power registers
+            protocol.addTask(new FC16WriteRegistersTask(2, reactivePowerElement));
+        }
 
         if (activePower > 0) {
             // Buy-From-Grid

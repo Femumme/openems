@@ -68,10 +68,6 @@ jobs:
           images: |
             openems/${{ matrix.image }}
             ghcr.io/openems/${{ matrix.image }}
-          labels: |
-            org.opencontainers.image.authors=OpenEMS
-            org.opencontainers.image.title=OpenEMS ${{ matrix.image }}
-            org.opencontainers.image.vendor=OpenEMS <openems.io>
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}

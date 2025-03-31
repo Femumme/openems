@@ -30,4 +30,4 @@ RUN find /etc/s6-overlay/s6-rc.d -type f -name 'run' -exec chmod +x {} \;
 VOLUME /var/opt/openems/config
 VOLUME /var/opt/openems/data
 
-EXPOSE 8080 8085
+EXPOSE 8080 8081 502
