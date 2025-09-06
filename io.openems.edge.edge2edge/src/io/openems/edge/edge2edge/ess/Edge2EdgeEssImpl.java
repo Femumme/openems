@@ -1,5 +1,11 @@
 package io.openems.edge.edge2edge.ess;
 
+import static org.osgi.service.component.annotations.ReferenceCardinality.MANDATORY;
+import static org.osgi.service.component.annotations.ReferenceCardinality.OPTIONAL;
+import static org.osgi.service.component.annotations.ReferencePolicy.DYNAMIC;
+import static org.osgi.service.component.annotations.ReferencePolicy.STATIC;
+import static org.osgi.service.component.annotations.ReferencePolicyOption.GREEDY;
+
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -43,6 +49,9 @@ import io.openems.edge.bridge.modbus.api.task.FC16WriteRegistersTask;
 import io.openems.edge.bridge.modbus.api.element.UnsignedDoublewordElement;
 import io.openems.edge.bridge.modbus.api.ModbusProtocol;
 import io.openems.common.exceptions.OpenemsException;
+import io.openems.edge.timedata.api.Timedata;
+import io.openems.edge.timedata.api.TimedataProvider;
+import io.openems.edge.timedata.api.utils.CalculateEnergyFromPower;
 
 @Designate(ocd = Config.class, factory = true)
 @Component(//
@@ -55,6 +64,11 @@ import io.openems.common.exceptions.OpenemsException;
 })
 public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmetricEss, AsymmetricEss, SymmetricEss,
         Edge2EdgeEss, Edge2Edge, ModbusComponent, TimedataProvider, OpenemsComponent {
+
+	private final CalculateEnergyFromPower calculateActiveChargeEnergy = new CalculateEnergyFromPower(this,
+			SymmetricEss.ChannelId.ACTIVE_CHARGE_ENERGY);
+	private final CalculateEnergyFromPower calculateActiveDischargeEnergy = new CalculateEnergyFromPower(this,
+			SymmetricEss.ChannelId.ACTIVE_DISCHARGE_ENERGY);
 
     @Reference
     private ConfigurationAdmin cm;
@@ -70,7 +84,10 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
     private final CalculateEnergyFromPower calculateDischargeEnergy = new CalculateEnergyFromPower(this,
             SymmetricEss.ChannelId.ACTIVE_DISCHARGE_ENERGY);
 
-    @Reference(policy = ReferencePolicy.STATIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.MANDATORY)
+    @Reference(policy = DYNAMIC, policyOption = GREEDY, cardinality = OPTIONAL)
+	private volatile Timedata timedata;
+
+	@Reference(policy = STATIC, policyOption = GREEDY, cardinality = MANDATORY)
     protected void setModbus(BridgeModbus modbus) {
         super.setModbus(modbus);
     }
@@ -93,7 +110,7 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
                 StartStoppable.ChannelId.values(), //
                 Edge2EdgeEss.ChannelId.values() //
         );
-        this._setMaxApparentPower(Integer.MAX_VALUE); // has no effect, as long as AllowedCharge/DischargePower are null
+
     }
 
     @Activate
@@ -184,7 +201,22 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
         }
     }
 
-    @Override
+    private void calculateEnergy() {
+		var activePower = this.getActivePower().get();
+		if (activePower == null) {
+			// Not available
+			this.calculateActiveChargeEnergy.update(null);
+			this.calculateActiveDischargeEnergy.update(null);
+		} else if (activePower > 0) {
+			// Discharge
+			this.calculateActiveChargeEnergy.update(0);
+			this.calculateActiveDischargeEnergy.update(activePower);
+		} else {
+			// Charge
+			this.calculateActiveChargeEnergy.update(activePower * -1);
+			this.calculateActiveDischargeEnergy.update(0);
+		}
+	}@Override
     public int getPowerPrecision() {
         return 1;
     }

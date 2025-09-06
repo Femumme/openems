@@ -1,4 +1,6 @@
 import {Component, Input} from "@angular/core";
+import {IonRange } from "@ionic/angular";
+import { Converter } from "../../shared/converter";
 import {AbstractModalLine} from "../abstract-modal-line";
 import {ButtonLabel} from "../modal-button/modal-button";
 
@@ -20,17 +22,19 @@ export class ModalLineComponent extends AbstractModalLine {
   @Input() protected button: ButtonLabel | null = null;
   /** ControlName for Toggle Button */
   @Input({ required: true }) protected control!:
-    { type: 'TOGGLE' } |
-    { type: 'INPUT', properties?: { unit: 'W' | '%' } } |
+    { type: "TOGGLE" } |
+    { type: "INPUT", properties?: { unit: "W" } } |
     /* the available select options*/
-    { type: 'SELECT', options: { value: string, name: string }[] } |
+    { type: "SELECT", options: { value: string, name: string }[] } |
     /* the properties for range slider*/
-    { type: 'RANGE', properties: { min: number, max: number, unit: 'H' | '%', step?: number } } |
+    { type: "RANGE", properties: { /* ticks*/ tickMin: number, tickMax: number, tickFormatter?: IonRange["pinFormatter"], unit: "H" | string, step?: number, pinFormatter: IonRange["pinFormatter"], label?: IonRange["label"], snaps?: boolean } } |
+    { type: "TEXT", valueConverter?: Converter } |
     /* the properties for range slider*/
     { type: 'DATE_PICKER', properties?: { label: string } };
 
   /** Fixed indentation of the modal-line */
   @Input() protected textIndent: TextIndentation = TextIndentation.NONE;
+    protected readonly DEFAULT_PIN_FORMATTER: IonRange["pinFormatter"] = (val: number) => val;
 }
 
 export enum TextIndentation {
