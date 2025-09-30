@@ -9,6 +9,7 @@ import static org.osgi.service.component.annotations.ReferencePolicyOption.GREED
 import java.util.List;
 import java.util.function.Consumer;
 
+import io.openems.edge.common.event.EdgeEventConstants;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -16,6 +17,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.propertytypes.EventTopics;
 import org.osgi.service.metatype.annotations.Designate;
 
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
@@ -42,9 +44,12 @@ import io.openems.edge.timedata.api.utils.CalculateEnergyFromPower;
 @Designate(ocd = Config.class, factory = true)
 @Component(//
 		name = "Edge2Edge.Ess", //
-		immediate = true, //
 		configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
+@EventTopics({ //
+		EdgeEventConstants.TOPIC_CYCLE_AFTER_PROCESS_IMAGE, //
+		EdgeEventConstants.TOPIC_CYCLE_BEFORE_CONTROLLERS //
+})
 public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmetricEss, AsymmetricEss, SymmetricEss,
 		Edge2EdgeEss, Edge2Edge, ModbusComponent, TimedataProvider, OpenemsComponent {
 
