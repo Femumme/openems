@@ -29,7 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
@@ -207,9 +210,16 @@ public class ControllerEssTimeframeImpl extends AbstractOpenemsComponent
 
     private static Date getDateFromIsoString(String iso8601String) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ISO_DATE_TIME;
-        OffsetDateTime offsetDateTime = OffsetDateTime.parse(iso8601String, timeFormatter);
-
-        return Date.from(Instant.from(offsetDateTime));
+        try {
+            // Try with offset first (e.g. 2025-09-29T18:00:00Z or +02:00)
+            OffsetDateTime offsetDateTime = OffsetDateTime.parse(iso8601String, timeFormatter);
+            return Date.from(Instant.from(offsetDateTime));
+        } catch (RuntimeException ignore) {
+            // Fallback: parse local datetime without offset and assume system default zone
+            LocalDateTime localDateTime = LocalDateTime.parse(iso8601String, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            ZonedDateTime zoned = localDateTime.atZone(ZoneId.systemDefault());
+            return Date.from(zoned.toInstant());
+        }
     }
 
     @Override
