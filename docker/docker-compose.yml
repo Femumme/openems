@@ -1,0 +1,43 @@
+services:
+  edge:
+    build:
+      context: ..
+      dockerfile: docker/edge/Dockerfile
+      args:
+        JAVA_VERSION: 21
+    image: openems_edge:local
+    container_name: openems_edge
+    hostname: edge
+    restart: unless-stopped
+    volumes:
+      - ./edge/conf:/var/opt/openems/config:rw
+      - ./edge/data:/var/opt/openems/data:rw
+    ports:
+      - "8080:8080" # Apache Felix Web Console
+      - "8075:8075" # UI Websocket
+      - "502:502"   # Modbus TCP
+
+  ui:
+    build:
+      context: ..
+      dockerfile: docker/ui/Dockerfile
+      args:
+        NODE: 20
+        VERSION: openems,openems-edge-docker
+    image: openems_ui:local
+    container_name: openems_ui
+    hostname: ui
+    restart: unless-stopped
+    environment:
+      - UI_WEBSOCKET=ws://edge:8075
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - edge
+
+
+
+
+
+

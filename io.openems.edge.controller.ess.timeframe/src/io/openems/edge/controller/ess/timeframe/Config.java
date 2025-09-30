@@ -1,10 +1,9 @@
 package io.openems.edge.controller.ess.timeframe;
 
+import io.openems.edge.common.type.Phase;
+import io.openems.edge.ess.power.api.Relationship;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
-
-import io.openems.edge.ess.power.api.Phase;
-import io.openems.edge.ess.power.api.Relationship;
 
 @ObjectClassDefinition(//
         name = "Controller Ess Timeframe", //
@@ -51,7 +50,7 @@ import io.openems.edge.ess.power.api.Relationship;
     Relationship relationship() default Relationship.EQUALS;
 
     @AttributeDefinition(name = "Phase", description = "Apply target power to L1, L2, L3 or sum of all phases")
-    Phase phase() default Phase.ALL;
+    Phase.SingleOrAllPhase phase() default Phase.SingleOrAllPhase.ALL;
 
     String webconsole_configurationFactory_nameHint() default "Controller Ess Timeframe [{id}]";
 }

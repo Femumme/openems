@@ -49,9 +49,7 @@ import io.openems.edge.bridge.modbus.api.task.FC16WriteRegistersTask;
 import io.openems.edge.bridge.modbus.api.element.UnsignedDoublewordElement;
 import io.openems.edge.bridge.modbus.api.ModbusProtocol;
 import io.openems.common.exceptions.OpenemsException;
-import io.openems.edge.timedata.api.Timedata;
-import io.openems.edge.timedata.api.TimedataProvider;
-import io.openems.edge.timedata.api.utils.CalculateEnergyFromPower;
+ 
 
 @Designate(ocd = Config.class, factory = true)
 @Component(//
@@ -76,8 +74,7 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
     @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
     private volatile Power power = null;
 
-    @Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.RELUCTANT, cardinality = ReferenceCardinality.OPTIONAL)
-    private volatile Timedata timedata = null;
+    
 
     private final CalculateEnergyFromPower calculateChargeEnergy = new CalculateEnergyFromPower(this,
             SymmetricEss.ChannelId.ACTIVE_CHARGE_ENERGY);

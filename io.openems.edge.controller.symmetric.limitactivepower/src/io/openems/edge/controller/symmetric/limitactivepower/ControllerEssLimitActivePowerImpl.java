@@ -101,20 +101,20 @@ public class ControllerEssLimitActivePowerImpl extends AbstractOpenemsComponent
         if (this.config.validatePowerConstraints()) {
 
             // adjust value so that it fits into Min/MaxActivePower
-            var maxPower = ess.getPower().getMaxPower(ess, Phase.ALL, Pwr.ACTIVE);
-            var minPower = ess.getPower().getMinPower(ess, Phase.ALL, Pwr.ACTIVE);
+            var maxPower = ess.getPower().getMaxPower(ess, ALL, ACTIVE);
+            var minPower = ess.getPower().getMinPower(ess, ALL, ACTIVE);
             var calculatedMaxDischargePower = fitIntoMinMax(minPower, maxPower, this.maxDischargePower);
             var calculatedMaxChargePower = fitIntoMinMax(minPower, maxPower, this.maxChargePower);
             // set result
-            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
-                    Relationship.GREATER_OR_EQUALS, calculatedMaxChargePower);
-            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE,
-                    Relationship.LESS_OR_EQUALS, calculatedMaxDischargePower);
+            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", ALL, ACTIVE,
+                    GREATER_OR_EQUALS, calculatedMaxChargePower);
+            ess.addPowerConstraintAndValidate("SymmetricLimitActivePower", ALL, ACTIVE,
+                    LESS_OR_EQUALS, calculatedMaxDischargePower);
         } else {
 
-            ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.GREATER_OR_EQUALS,
+            ess.addPowerConstraint("SymmetricLimitActivePower", ALL, ACTIVE, GREATER_OR_EQUALS,
                     this.maxChargePower);
-            ess.addPowerConstraint("SymmetricLimitActivePower", Phase.ALL, Pwr.ACTIVE, Relationship.LESS_OR_EQUALS,
+            ess.addPowerConstraint("SymmetricLimitActivePower", ALL, ACTIVE, LESS_OR_EQUALS,
                     this.maxDischargePower);
         }
     }

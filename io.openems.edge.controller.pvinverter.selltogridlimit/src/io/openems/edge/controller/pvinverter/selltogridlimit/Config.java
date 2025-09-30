@@ -29,6 +29,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "Maximum allowed Sell-To-Grid power (per Phase in asymmetric mode)", description = "The target limit for sell-to-grid power.")
 	int maximumSellToGridPower() default 5_000;
 
+	@AttributeDefinition(name = "ESS-ID (optional)", description = "ID of the ESS to consider discharge power for opening PV production.")
+	String ess_id() default "";
+
 	String webconsole_configurationFactory_nameHint() default "Controller PV-Inverter Sell-to-Grid Limit [{id}]";
 
 }
