@@ -17,6 +17,9 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.event.propertytypes.EventTopics;
 import org.osgi.service.metatype.annotations.Designate;
 
@@ -61,8 +64,8 @@ public class Edge2EdgeEssImpl extends AbstractEdge2Edge implements ManagedSymmet
 	@Reference
 	private ConfigurationAdmin cm;
 
-	@Reference
-	private Power power;
+	@Reference(policy = ReferencePolicy.DYNAMIC, policyOption = ReferencePolicyOption.GREEDY, cardinality = ReferenceCardinality.OPTIONAL)
+	private volatile Power power = null;
 
 	@Reference(policy = DYNAMIC, policyOption = GREEDY, cardinality = OPTIONAL)
 	private volatile Timedata timedata;
