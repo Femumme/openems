@@ -12,14 +12,7 @@ Bundle-Version: 1.0.0.${tstamp}
 	io.openems.edge.ess.api,\
 	io.openems.edge.meter.api,\
 	io.openems.edge.timedata.api,\
-	org.osgi.service.component.annotations,\
-	org.osgi.service.metatype.annotations,\
-	org.osgi.service.cm,\
-	org.osgi.service.event,\
-	org.osgi.framework,\
-	org.apache.felix.scr,\
-	io.openems.edge.timedata.api,\
-	io.openems.j2mod\
+	io.openems.j2mod,\
 
 -testpath: \
 	${testpath}
