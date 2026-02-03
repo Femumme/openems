@@ -1,0 +1,10 @@
+= Controller Evcs Fixed Pricing
+
+Provides a fixed global EVCS price via the `EvcsPricing` API.
+
+Configuration:
+
+- Price [€/kWh]
+
+
+

@@ -218,7 +218,11 @@
           },
           "Uncontrollable": "This charging station can not be controlled.",
           "HYSTERESIS": "Minimum switching time of the charging station active",
-          "HYSTERESIS_INFO": "For preventing charging interruptions due to frequent starting/pausing of the charing process, the charging mode currently selected will continue for the next few minutes."
+          "HYSTERESIS_INFO": "For preventing charging interruptions due to frequent starting/pausing of the charing process, the charging mode currently selected will continue for the next few minutes.",
+          "FixedPricing": {
+            "price": "Configured Price [€/kWh]",
+            "info": "This controller sets a fixed EVCS price that is exported to the charging backend."
+          }
         },
         "Heatingelement": {
           "activeForced": "Active (Minimum runtime)",
@@ -525,6 +529,7 @@
     }
   },
   "General": {
+    "currentPrice": "Current Price",
     "EDIT": "Edit",
     "THEME_SELECTION": {
       "TITLE": "Lights off, comfort on!",

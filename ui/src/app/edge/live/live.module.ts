@@ -21,7 +21,9 @@ import {Controller_Ess_FixActivePower} from "./Controller/Ess/FixActivePower/Ess
 import {Controller_Ess_GridOptimizedCharge} from "./Controller/Ess/GridOptimizedCharge/Ess_GridOptimizedCharge";
 import {Controller_Ess_TimeOfUseTariff} from "./Controller/Ess/TimeOfUseTariff/Ess_TimeOfUseTariff";
 import {AdministrationComponent} from "./Controller/Evcs/administration/administration.component";
-import {Controller_Evcs} from "./Controller/Evcs/Evcs";import { ControllerEvseSingle } from "./Controller/Evse/EvseSingle.module";
+import {Controller_Evcs} from "./Controller/Evcs/Evcs";
+import { Controller_Evcs_FixedPricing } from "./Controller/Evcs/FixedPricing/Evcs_FixedPricing";
+import { ControllerEvseSingle } from "./Controller/Evse/EvseSingle.module";
 import { ControllerHeat } from "./Controller/Heat/HeatMyPv";
 import {
   Controller_Io_ChannelSingleThresholdComponent
@@ -78,6 +80,7 @@ import {
     Controller_Ess_GridOptimizedCharge,
     Controller_Ess_TimeOfUseTariff,
     Controller_Evcs,
+    Controller_Evcs_FixedPricing,
     ControllerEvseSingle,
     ControllerHeat,
     Controller_Io_HeatingElement,

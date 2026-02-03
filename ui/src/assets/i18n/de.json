@@ -218,7 +218,11 @@
           },
           "Uncontrollable": "Diese Ladesäule kann nicht gesteuert werden.",
           "HYSTERESIS": "Mindestumschaltzeit der Ladestation aktiv",
-          "HYSTERESIS_INFO": "Um Ladeabbrüche aufgrund zu häufigen Startens/Pausierens des Ladevorgangs zu verhindern, wird der aktuell eingestellte Lademodus für die nächsten Minuten fortgesetzt."
+          "HYSTERESIS_INFO": "Um Ladeabbrüche aufgrund zu häufigen Startens/Pausierens des Ladevorgangs zu verhindern, wird der aktuell eingestellte Lademodus für die nächsten Minuten fortgesetzt.",
+          "FixedPricing": {
+            "price": "Konfigurierter Preis [€/kWh]",
+            "info": "Dieser Controller setzt einen festen EVCS-Preis, der an das Ladestations-Backend exportiert wird."
+          }
         },
         "Heatingelement": {
           "activeForced": "Aktiv (Mindestlaufzeit)",
@@ -524,6 +528,7 @@
     }
   },
   "General": {
+    "currentPrice": "Aktueller Preis",
     "EDIT": "Bearbeiten",
     "THEME_SELECTION": {
       "TITLE": "Licht aus, Komfort an!",

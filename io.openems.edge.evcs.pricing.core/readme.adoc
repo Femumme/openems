@@ -1,0 +1,14 @@
+= Core EVCS Pricing
+
+This is a singleton component that holds the global EVCS price.
+
+Controllers write to the Price channel:
+- Controller.Evcs.FixedPricing - sets a fixed price from configuration
+- Future: Controller.Evcs.AutomaticPricing - sets price based on PV/ESS conditions
+
+Exporters read from the Price channel and export to backends:
+- EvcsPricing.Eaaze - exports to the Eaaze charging station backend
+
+
+
+

@@ -168,6 +168,11 @@
                 <Controller_Ess_GridOptimizedCharge [componentId]="widget.componentId">
                 </Controller_Ess_GridOptimizedCharge>
               </ion-col>
+
+              <ion-col size="12" *ngSwitchCase="'Controller.Evcs.FixedPricing'" size-lg="6" class="ion-no-padding">
+                <Controller_Evcs_FixedPricing [componentId]="widget.componentId">
+                </Controller_Evcs_FixedPricing>
+              </ion-col>
             </ng-container>
 
           </ion-row>

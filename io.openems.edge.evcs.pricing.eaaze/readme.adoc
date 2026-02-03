@@ -1,0 +1,8 @@
+== EVCS Pricing Eaaze Exporter
+
+Reads the global `EvcsPricing` price (€/kWh) and exports it to the Eaaze backend.
+
+For now, the export is a placeholder that sets an HTTP status code of 200 on successful trigger.
+
+
+

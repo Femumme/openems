@@ -1,0 +1,6 @@
+= EVCS Pricing API
+
+Defines the global EVCS pricing interface `EvcsPricing` with a single Channel `PRICE` in €/kWh.
+
+
+
