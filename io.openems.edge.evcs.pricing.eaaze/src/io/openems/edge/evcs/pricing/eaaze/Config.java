@@ -38,5 +38,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "Tax Rate", description = "VAT tax rate as decimal (e.g. 0.19 for 19%).")
 	double taxRate() default 0.19;
 
+	@AttributeDefinition(name = "Retry Backoff [s]", description = "Base backoff delay between retries in seconds. "
+			+ "Actual delay is attempt * backoff (e.g. 30s, 60s, 90s for 3 retries).")
+	int retryBackoffSeconds() default 30;
+
 	String webconsole_configurationFactory_nameHint() default "Evcs Pricing Eaaze Exporter [{id}]";
 }
