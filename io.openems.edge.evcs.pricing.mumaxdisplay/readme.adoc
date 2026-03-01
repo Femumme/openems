@@ -1,0 +1,14 @@
+== EVCS Pricing Mumax Display Exporter
+
+Reads the global `EvcsPricing` price (€/kWh) and exports it to a Mumax display endpoint via HTTP POST.
+
+The price is converted from €/kWh to ct/kWh (integer) and sent as the plain request body with Bearer token authentication:
+
+----
+POST <url>
+Authorization: Bearer <apiToken>
+Body: 99
+----
+
+The export is triggered on every price change and additionally at a configurable interval (default: 30 minutes) as a fallback.
+Failed exports are retried up to 3 times with linear backoff.

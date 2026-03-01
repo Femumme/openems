@@ -208,6 +208,7 @@
 	bnd.identity;id='io.openems.edge.evcs.pricing.core',\
 	bnd.identity;id='io.openems.edge.controller.evcs.fixedpricing',\
 	bnd.identity;id='io.openems.edge.evcs.pricing.eaaze',\
+	bnd.identity;id='io.openems.edge.evcs.pricing.mumaxdisplay',\
 	
 -runbundles: \
 	Java-WebSocket;version='[1.6.0,1.6.1)',\
@@ -468,4 +469,5 @@
 	io.openems.edge.evcs.pricing.api;version=snapshot,\
 	io.openems.edge.evcs.pricing.core;version=snapshot,\
 	io.openems.edge.controller.evcs.fixedpricing;version=snapshot,\
-	io.openems.edge.evcs.pricing.eaaze;version=snapshot
+	io.openems.edge.evcs.pricing.eaaze;version=snapshot,\
+	io.openems.edge.evcs.pricing.mumaxdisplay;version=snapshot
