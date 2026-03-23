@@ -2,7 +2,7 @@
 import { Component } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
 import { AbstractModal } from "src/app/shared/components/modal/abstractModal";
-import { ChannelAddress, CurrentData } from "src/app/shared/shared";
+import { ChannelAddress, CurrentData, Utils } from "src/app/shared/shared";
 
 @Component({
   templateUrl: "./modal.html",
@@ -13,6 +13,7 @@ export class ModalComponent extends AbstractModal {
   private static readonly EVCS_PRICING_ID = "_evcsPricing";
 
   public currentPrice: number | null = null;
+  public readonly CONVERT_MANUAL_ON_OFF = Utils.CONVERT_MANUAL_ON_OFF(this.translate);
 
   protected override getChannelAddresses(): ChannelAddress[] {
     return [
@@ -27,6 +28,7 @@ export class ModalComponent extends AbstractModal {
 
   protected override getFormGroup(): FormGroup {
     return this.formBuilder.group({
+      mode: new FormControl(this.component.properties.mode),
       priceEurPerKwh: new FormControl(this.component.properties.priceEurPerKwh),
     });
   }

@@ -1,19 +1,26 @@
 <oe-modal [title]="this.component.alias" [component]="component" [formGroup]="formGroup" *ngIf="isInitialized">
 
   <oe-modal-line [name]="'General.currentPrice' | translate"
-    [value]="currentPrice != null ? (currentPrice | number:'1.2-4') + ' €/kWh' : '-'">
+    [value]="currentPrice !== null ? (currentPrice | number:'1.2-4') + ' €/kWh' : '-'">
   </oe-modal-line>
 
   <oe-modal-horizontal-line></oe-modal-horizontal-line>
 
-  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.FixedPricing.price' | translate" [formGroup]="formGroup"
-    controlName="priceEurPerKwh" [control]="{type: 'INPUT'}">
-  </oe-modal-line>
+  <oe-modal-buttons [formGroup]="formGroup" controlName="mode" [component]="component" [buttons]="[
+    { name: ('General.on' | translate),  value: 'MANUAL_ON',  icon: {color:'success', name: 'power-outline'}},
+    { name: ('General.off' | translate), value: 'MANUAL_OFF', icon: {color:'danger',  name: 'power-outline'}}]">
+  </oe-modal-buttons>
 
   <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <ng-container *ngIf="formGroup.value.mode === 'MANUAL_ON'">
+    <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.FixedPricing.price' | translate" [formGroup]="formGroup"
+      controlName="priceEurPerKwh" [control]="{type: 'INPUT'}">
+    </oe-modal-line>
+    <oe-modal-horizontal-line></oe-modal-horizontal-line>
+  </ng-container>
 
   <oe-modal-info-line [info]="'Edge.Index.Widgets.EVCS.FixedPricing.info' | translate">
   </oe-modal-info-line>
 
 </oe-modal>
-
