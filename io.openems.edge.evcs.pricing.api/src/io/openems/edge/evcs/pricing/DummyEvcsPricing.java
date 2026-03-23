@@ -1,12 +1,11 @@
-package io.openems.edge.controller.evcs.batterypricing;
+package io.openems.edge.evcs.pricing;
 
 import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.common.test.AbstractDummyOpenemsComponent;
-import io.openems.edge.evcs.pricing.EvcsPricing;
 
 /**
- * Simulated {@link EvcsPricing} component for unit tests. Records the last
- * {@link #addPriceCeiling} and {@link #addPriceFloor} calls for assertion.
+ * Shared test double for {@link EvcsPricing}. Records the most recent call to
+ * each mutating method for assertion in unit tests.
  */
 public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPricing>
 		implements EvcsPricing, OpenemsComponent {
@@ -15,6 +14,9 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 	private Double lastCeilingPrice;
 	private String lastFloorSource;
 	private Double lastFloorPrice;
+	private String lastSetOverrideSource;
+	private Double lastSetOverridePrice;
+	private String lastRemoveOverrideSource;
 	private String lastRemoveConstraintSource;
 
 	public DummyEvcsPricing() {
@@ -26,6 +28,18 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 	@Override
 	protected DummyEvcsPricing self() {
 		return this;
+	}
+
+	/** Resets all recorded state. Call between test cases if needed. */
+	public void reset() {
+		this.lastCeilingSource = null;
+		this.lastCeilingPrice = null;
+		this.lastFloorSource = null;
+		this.lastFloorPrice = null;
+		this.lastSetOverrideSource = null;
+		this.lastSetOverridePrice = null;
+		this.lastRemoveOverrideSource = null;
+		this.lastRemoveConstraintSource = null;
 	}
 
 	/**
@@ -65,6 +79,33 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 	}
 
 	/**
+	 * Returns the source ID from the last {@link #setOverride} call.
+	 *
+	 * @return source or null if never called
+	 */
+	public String getLastSetOverrideSource() {
+		return this.lastSetOverrideSource;
+	}
+
+	/**
+	 * Returns the price from the last {@link #setOverride} call.
+	 *
+	 * @return price or null if never called
+	 */
+	public Double getLastSetOverridePrice() {
+		return this.lastSetOverridePrice;
+	}
+
+	/**
+	 * Returns the source ID from the last {@link #removeOverride} call.
+	 *
+	 * @return source or null if never called
+	 */
+	public String getLastRemoveOverrideSource() {
+		return this.lastRemoveOverrideSource;
+	}
+
+	/**
 	 * Returns the source ID from the last {@link #removeConstraint} call.
 	 *
 	 * @return source or null if never called
@@ -87,12 +128,13 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 
 	@Override
 	public void setOverride(String source, double price) {
-		// no-op for tests
+		this.lastSetOverrideSource = source;
+		this.lastSetOverridePrice = price;
 	}
 
 	@Override
 	public void removeOverride(String source) {
-		// no-op for tests
+		this.lastRemoveOverrideSource = source;
 	}
 
 	@Override

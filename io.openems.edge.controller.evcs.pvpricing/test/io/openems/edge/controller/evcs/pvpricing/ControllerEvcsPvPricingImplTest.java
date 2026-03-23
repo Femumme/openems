@@ -8,6 +8,7 @@ import org.junit.Test;
 import io.openems.edge.common.sum.DummySum;
 import io.openems.edge.common.test.AbstractComponentTest.TestCase;
 import io.openems.edge.controller.test.ControllerTest;
+import io.openems.edge.evcs.pricing.DummyEvcsPricing;
 import io.openems.edge.evcs.pricing.EvcsPricingController;
 
 public class ControllerEvcsPvPricingImplTest {

@@ -13,4 +13,5 @@ Bundle-Version: 1.0.0.${tstamp}
 -testpath: \
 	${testpath},\
 	io.openems.edge.controller.api,\
-	io.openems.edge.common
+	io.openems.edge.common,\
+	io.openems.edge.evcs.pricing.api
