@@ -1,5 +1,9 @@
 package io.openems.edge.evcs.pricing.core;
 
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import org.junit.Test;
 
 import io.openems.edge.common.test.AbstractComponentTest.TestCase;
@@ -338,6 +342,41 @@ public class EvcsPricingCoreImplTest {
 						.onExecuteControllersCallbacks(() -> sut.addPriceCeiling("ctrl0", 0.30)) //
 						.output(EvcsPricing.ChannelId.ACTIVE_OVERRIDE_SOURCE, null) //
 						.output(EvcsPricing.ChannelId.ACTIVE_OVERRIDE_VALUE, null)) //
+				.deactivate();
+	}
+
+	// -------------------------------------------------------------------------
+	// Interval tick promotes constraint-based price
+	// -------------------------------------------------------------------------
+
+	/**
+	 * After the interval tick is reached, the locked price is updated even with no
+	 * override or override change.
+	 *
+	 * <p>
+	 * Cycle 1: clock at 10:30 — interval tick (11:00) not yet reached, ceiling
+	 * submitted but not locked. Cycle 2: clock advances past 11:00:01 — interval
+	 * reached, ceiling 0.30 is locked.
+	 */
+	@Test
+	public void intervalTick_locksPrice() throws Exception {
+		var baseTime = ZonedDateTime.of(2024, 6, 15, 10, 30, 0, 0, ZoneOffset.UTC).toInstant();
+		var tickTime = ZonedDateTime.of(2024, 6, 15, 11, 0, 1, 0, ZoneOffset.UTC).toInstant();
+
+		var sut = new EvcsPricingCoreImpl();
+		sut.setClock(Clock.fixed(baseTime, ZoneOffset.UTC));
+
+		new ComponentTest(sut) //
+				.activate(defaultConfig()) //
+				// Cycle 1: before tick — ceiling set but interval not yet reached, no lock
+				.next(new TestCase("before tick — interval not reached") //
+						.onBeforeControllersCallbacks(() -> sut.setClock(Clock.fixed(baseTime, ZoneOffset.UTC))) //
+						.onExecuteControllersCallbacks(() -> sut.addPriceCeiling("ctrl0", 0.30))) //
+				// Cycle 2: advance clock past tick — interval reached, price locked to 0.30
+				.next(new TestCase("after tick — price locked") //
+						.onBeforeControllersCallbacks(() -> sut.setClock(Clock.fixed(tickTime, ZoneOffset.UTC))) //
+						.onExecuteControllersCallbacks(() -> sut.addPriceCeiling("ctrl0", 0.30)) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.30)) //
 				.deactivate();
 	}
 }

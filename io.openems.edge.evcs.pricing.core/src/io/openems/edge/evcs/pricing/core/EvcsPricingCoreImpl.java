@@ -1,7 +1,7 @@
 package io.openems.edge.evcs.pricing.core;
 
+import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,6 +57,9 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 	private double absoluteMinPrice = 0.00;
 	private double absoluteMaxPrice = 9.99;
 
+	// Replaceable for testing; production uses the system clock
+	private Clock clock = Clock.systemDefaultZone();
+
 	private Instant nextIntervalTick = Instant.MIN;
 	private Double lastOverrideValue = null;
 
@@ -83,7 +86,7 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 		this.cronExpression = new CronExpression(config.cronExpression());
 		this.absoluteMinPrice = config.absoluteMinPrice();
 		this.absoluteMaxPrice = config.absoluteMaxPrice();
-		this.nextIntervalTick = this.cronExpression.nextTick(Instant.now(), ZoneId.systemDefault());
+		this.nextIntervalTick = this.cronExpression.nextTick(this.clock.instant(), this.clock.getZone());
 		this._setNextPriceChange(this.nextIntervalTick.toEpochMilli());
 		this.log.info("EVCS Pricing Core: cron={}, absolute=[{}, {}]",
 				config.cronExpression(), this.absoluteMinPrice, this.absoluteMaxPrice);
@@ -92,6 +95,11 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 	@Deactivate
 	protected void deactivate() {
 		super.deactivate();
+	}
+
+	/** Replaces the clock for unit tests. Package-private. */
+	void setClock(Clock clock) {
+		this.clock = clock;
 	}
 
 	@Override
@@ -169,14 +177,14 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 
 	private void lockPriceIfNeeded(double resolvedPrice, Double overridePrice) {
 		boolean overrideChanged = !equalsNullable(overridePrice, this.lastOverrideValue);
-		var now = Instant.now();
+		var now = this.clock.instant();
 		boolean intervalReached = !now.isBefore(this.nextIntervalTick);
 
 		if (overridePrice != null || overrideChanged || intervalReached) {
 			this._setPrice(resolvedPrice);
 
 			if (intervalReached) {
-				this.nextIntervalTick = this.cronExpression.nextTick(now, ZoneId.systemDefault());
+				this.nextIntervalTick = this.cronExpression.nextTick(now, this.clock.getZone());
 				this._setNextPriceChange(this.nextIntervalTick.toEpochMilli());
 			}
 		}
