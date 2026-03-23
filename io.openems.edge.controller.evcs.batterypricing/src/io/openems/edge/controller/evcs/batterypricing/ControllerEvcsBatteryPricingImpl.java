@@ -12,7 +12,7 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
 
-import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
+import io.openems.common.exceptions.InvalidValueException;
 import io.openems.edge.common.component.AbstractOpenemsComponent;
 import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.common.sum.Sum;
@@ -86,7 +86,7 @@ public class ControllerEvcsBatteryPricingImpl extends AbstractOpenemsComponent
 		Integer soc;
 		try {
 			soc = this.sum.getEssSoc().getOrError();
-		} catch (OpenemsNamedException e) {
+		} catch (InvalidValueException e) {
 			this.clearChannels();
 			return;
 		}

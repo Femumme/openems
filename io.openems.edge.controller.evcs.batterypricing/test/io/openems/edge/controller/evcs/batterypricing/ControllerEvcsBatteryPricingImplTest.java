@@ -30,6 +30,7 @@ public class ControllerEvcsBatteryPricingImplTest {
 	private static MyConfig baseConfig() {
 		return MyConfig.create() //
 				.setId(CTRL_ID) //
+				.setAlias("Test Battery Pricing Controller") //
 				.setLowSocThreshold(LOW_SOC_THRESHOLD) //
 				.setHighSocThreshold(HIGH_SOC_THRESHOLD) //
 				.setLowSocFloorPrice(LOW_SOC_FLOOR_PRICE) //
@@ -53,7 +54,8 @@ public class ControllerEvcsBatteryPricingImplTest {
 				.addReference("sum", sum) //
 				.activate(baseConfig()) //
 				.next(new TestCase() //
-						.output(EvcsPricingController.ChannelId.ACTIVE_FLOOR, LOW_SOC_FLOOR_PRICE)) //
+						.output(EvcsPricingController.ChannelId.ACTIVE_FLOOR, LOW_SOC_FLOOR_PRICE) //
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, null)) //
 				.deactivate();
 
 		assertEquals(Double.valueOf(LOW_SOC_FLOOR_PRICE), dummy.getLastFloorPrice());
@@ -154,6 +156,12 @@ public class ControllerEvcsBatteryPricingImplTest {
 	 * When no SoC is set on the {@link DummySum}, the controller catches the
 	 * unavailable-value error internally, clears all pricing channels, and returns
 	 * without throwing.
+	 *
+	 * <p>
+	 * The "no exception" guarantee is enforced by {@code ControllerTest.next()},
+	 * which propagates any exception thrown by {@code run()} and would fail this
+	 * test. Removing the try-catch in the implementation would cause this test to
+	 * fail with an {@code InvalidValueException}.
 	 */
 	@Test
 	public void missingSoc_clearsChannels_noException() throws Exception {

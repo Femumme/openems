@@ -63,14 +63,6 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 		return this.lastFloorPrice;
 	}
 
-	/** Resets recorded state so tests start clean. */
-	public void reset() {
-		this.lastCeilingSource = null;
-		this.lastCeilingPrice = null;
-		this.lastFloorSource = null;
-		this.lastFloorPrice = null;
-	}
-
 	@Override
 	public void addPriceCeiling(String source, double maxPrice) {
 		this.lastCeilingSource = source;
