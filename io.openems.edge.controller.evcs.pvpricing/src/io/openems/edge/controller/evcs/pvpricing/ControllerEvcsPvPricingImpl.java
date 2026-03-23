@@ -81,7 +81,13 @@ public class ControllerEvcsPvPricingImpl extends AbstractOpenemsComponent
 
 	@Override
 	public void run() throws OpenemsNamedException {
-		var productionPower = this.sum.getProductionActivePower().getOrError();
+		Integer productionPower;
+		try {
+			productionPower = this.sum.getProductionActivePower().getOrError();
+		} catch (OpenemsNamedException e) {
+			this.clearChannels();
+			return;
+		}
 		this.pvAverage.add(productionPower);
 
 		var avgPv = this.pvAverage.getAverage();
