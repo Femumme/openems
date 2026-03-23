@@ -1,0 +1,43 @@
+<oe-modal [title]="this.component.alias" [component]="component" *ngIf="isInitialized">
+
+  <oe-modal-line [name]="'General.currentPrice' | translate"
+    [value]="currentPrice != null ? (currentPrice | number:'1.2-4') + ' €/kWh' : '-'">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.PricingDashboard.nextPrice' | translate"
+    [value]="nextPrice != null ? (nextPrice | number:'1.2-4') + ' €/kWh' : '-'">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.PricingDashboard.nextChange' | translate"
+    [value]="formatNextChange()">
+  </oe-modal-line>
+
+  <ng-container *ngIf="overrideSource">
+    <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+    <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.PricingDashboard.overrideActive' | translate"
+      [value]="overrideSource">
+    </oe-modal-line>
+
+    <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.PricingDashboard.overrideValue' | translate"
+      [value]="overrideValue != null ? (overrideValue | number:'1.2-4') + ' €/kWh' : '-'">
+    </oe-modal-line>
+  </ng-container>
+
+  <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <h3 style="padding: 0 16px; margin: 8px 0;">
+    {{ 'Edge.Index.Widgets.EVCS.PricingDashboard.controllers' | translate }}
+  </h3>
+
+  <ng-container *ngFor="let ctrl of controllers">
+    <oe-modal-line [name]="ctrl.alias" [value]="getConstraintType(ctrl) + ': ' + getConstraintValue(ctrl)">
+    </oe-modal-line>
+  </ng-container>
+
+  <ng-container *ngIf="controllers.length === 0">
+    <oe-modal-info-line [info]="'Edge.Index.Widgets.EVCS.PricingDashboard.noControllers' | translate">
+    </oe-modal-info-line>
+  </ng-container>
+
+</oe-modal>

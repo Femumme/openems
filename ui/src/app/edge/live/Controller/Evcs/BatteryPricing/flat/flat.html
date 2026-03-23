@@ -1,0 +1,8 @@
+<ng-container *ngIf="isInitialized">
+    <oe-flat-widget (click)="presentModal()" [icon]="{name:'battery-half-outline', color:'normal'}"
+        [title]="component.alias">
+        <oe-flat-widget-line [name]="'General.currentPrice' | translate"
+            [value]="currentPrice != null ? (currentPrice | number:'1.2-4') + ' €/kWh' : '-'">
+        </oe-flat-widget-line>
+    </oe-flat-widget>
+</ng-container>

@@ -1,0 +1,38 @@
+<oe-modal [title]="this.component.alias" [component]="component" [formGroup]="formGroup" *ngIf="isInitialized">
+
+  <oe-modal-line [name]="'General.currentPrice' | translate"
+    [value]="currentPrice != null ? (currentPrice | number:'1.2-4') + ' €/kWh' : '-'">
+  </oe-modal-line>
+
+  <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.lowSocThreshold' | translate"
+    [formGroup]="formGroup" controlName="lowSocThreshold" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.highSocThreshold' | translate"
+    [formGroup]="formGroup" controlName="highSocThreshold" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.lowSocFloorPrice' | translate"
+    [formGroup]="formGroup" controlName="lowSocFloorPrice" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.highSocCeilPrice' | translate"
+    [formGroup]="formGroup" controlName="highSocCeilPrice" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.fullCeilPrice' | translate"
+    [formGroup]="formGroup" controlName="fullCeilPrice" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-line [name]="'Edge.Index.Widgets.EVCS.BatteryPricing.dataCollectionWindow' | translate"
+    [formGroup]="formGroup" controlName="dataCollectionWindowMinutes" [control]="{type: 'INPUT'}">
+  </oe-modal-line>
+
+  <oe-modal-horizontal-line></oe-modal-horizontal-line>
+
+  <oe-modal-info-line [info]="'Edge.Index.Widgets.EVCS.BatteryPricing.info' | translate">
+  </oe-modal-info-line>
+
+</oe-modal>

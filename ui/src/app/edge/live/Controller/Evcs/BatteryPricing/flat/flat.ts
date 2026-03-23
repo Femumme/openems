@@ -3,15 +3,16 @@ import { Component } from "@angular/core";
 import { AbstractFlatWidget } from "src/app/shared/components/flat/abstract-flat-widget";
 import { ChannelAddress, CurrentData } from "src/app/shared/shared";
 
-import { EVCS_PRICE_CHANNEL, EVCS_PRICING_COMPONENT_ID } from "../../evcs-pricing.constants";
 import { ModalComponent } from "../modal/modal";
 
 @Component({
-  selector: "Controller_Evcs_PvPricing",
+  selector: "Controller_Evcs_BatteryPricing",
   templateUrl: "./flat.html",
   standalone: false,
 })
 export class FlatComponent extends AbstractFlatWidget {
+
+  private static readonly EVCS_PRICING_ID = "_evcsPricing";
 
   public currentPrice: number | null = null;
 
@@ -30,12 +31,11 @@ export class FlatComponent extends AbstractFlatWidget {
 
   protected override getChannelAddresses(): ChannelAddress[] {
     return [
-      new ChannelAddress(EVCS_PRICING_COMPONENT_ID, "Price"),
+      new ChannelAddress(FlatComponent.EVCS_PRICING_ID, "Price"),
     ];
   }
 
   protected override onCurrentData(currentData: CurrentData) {
-    this.currentPrice = currentData.allComponents[EVCS_PRICE_CHANNEL];
+    this.currentPrice = currentData.allComponents[FlatComponent.EVCS_PRICING_ID + "/Price"];
   }
-
 }

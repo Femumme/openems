@@ -3,7 +3,6 @@ import { Component } from "@angular/core";
 import { FormControl, FormGroup } from "@angular/forms";
 import { AbstractModal } from "src/app/shared/components/modal/abstractModal";
 import { ChannelAddress, CurrentData } from "src/app/shared/shared";
-import { EVCS_PRICE_CHANNEL, EVCS_PRICING_COMPONENT_ID } from "../../evcs-pricing.constants";
 
 @Component({
   templateUrl: "./modal.html",
@@ -11,24 +10,27 @@ import { EVCS_PRICE_CHANNEL, EVCS_PRICING_COMPONENT_ID } from "../../evcs-pricin
 })
 export class ModalComponent extends AbstractModal {
 
+  private static readonly EVCS_PRICING_ID = "_evcsPricing";
+
   public currentPrice: number | null = null;
 
   protected override getChannelAddresses(): ChannelAddress[] {
     return [
-      new ChannelAddress(EVCS_PRICING_COMPONENT_ID, "Price"),
+      new ChannelAddress(ModalComponent.EVCS_PRICING_ID, "Price"),
     ];
   }
 
   protected override onCurrentData(currentData: CurrentData) {
-    this.currentPrice = currentData.allComponents[EVCS_PRICE_CHANNEL];
+    this.currentPrice = currentData.allComponents[ModalComponent.EVCS_PRICING_ID + "/Price"];
   }
 
   protected override getFormGroup(): FormGroup {
     return this.formBuilder.group({
-      maxCeiling: new FormControl(this.component.properties.maxCeiling),
-      minCeiling: new FormControl(this.component.properties.minCeiling),
-      pvThreshold: new FormControl(this.component.properties.pvThreshold),
-      pvFullProduction: new FormControl(this.component.properties.pvFullProduction),
+      lowSocThreshold: new FormControl(this.component.properties.lowSocThreshold),
+      highSocThreshold: new FormControl(this.component.properties.highSocThreshold),
+      lowSocFloorPrice: new FormControl(this.component.properties.lowSocFloorPrice),
+      highSocCeilPrice: new FormControl(this.component.properties.highSocCeilPrice),
+      fullCeilPrice: new FormControl(this.component.properties.fullCeilPrice),
       dataCollectionWindowMinutes: new FormControl(this.component.properties.dataCollectionWindowMinutes),
     });
   }
