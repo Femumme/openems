@@ -61,25 +61,53 @@ public class ControllerEvcsFixedPricingImplTest {
 	}
 
 	/**
-	 * When {@code enabled=false}, {@code run()} must not call {@code setOverride}
+	 * When {@code mode=MANUAL_OFF}, {@code run()} must not call {@code setOverride}
 	 * and {@code ACTIVE_OVERRIDE} must remain null.
 	 */
 	@Test
-	public void disabled_doesNotSetOverride() throws Exception {
+	public void mode_off_doesNotSetOverride() throws Exception {
 		var dummy = new DummyEvcsPricing();
 
 		new ControllerTest(new ControllerEvcsFixedPricingImpl()) //
 				.addReference("evcsPricing", dummy) //
 				.activate(MyConfig.create() //
 						.setId(CTRL_ID) //
-						.setEnabled(false) //
+						.setMode(Mode.MANUAL_OFF) //
 						.setPriceEurPerKwh(PRICE) //
 						.build()) //
 				.next(new TestCase() //
 						.output(EvcsPricingController.ChannelId.ACTIVE_OVERRIDE, null)) //
 				.deactivate();
 
-		assertNull(dummy.getLastSetOverrideSource());
 		assertNull(dummy.getLastSetOverridePrice());
+	}
+
+	/**
+	 * When {@code mode} is changed from {@code MANUAL_OFF} to {@code MANUAL_ON},
+	 * the subsequent {@code run()} must set the override.
+	 */
+	@Test
+	public void mode_switch_to_manual_on_setsOverride() throws Exception {
+		var dummy = new DummyEvcsPricing();
+
+		new ControllerTest(new ControllerEvcsFixedPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.activate(MyConfig.create() //
+						.setId(CTRL_ID) //
+						.setMode(Mode.MANUAL_OFF) //
+						.setPriceEurPerKwh(PRICE) //
+						.build()) //
+				.next(new TestCase() //
+						.output(EvcsPricingController.ChannelId.ACTIVE_OVERRIDE, null)) //
+				.modified(MyConfig.create() //
+						.setId(CTRL_ID) //
+						.setMode(Mode.MANUAL_ON) //
+						.setPriceEurPerKwh(PRICE) //
+						.build()) //
+				.next(new TestCase() //
+						.output(EvcsPricingController.ChannelId.ACTIVE_OVERRIDE, PRICE)) //
+				.deactivate();
+
+		assertEquals(CTRL_ID, dummy.getLastSetOverrideSource());
 	}
 }

@@ -9,6 +9,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 		private String id;
 		private String alias;
 		private boolean enabled = true;
+		private Mode mode = Mode.MANUAL_ON;
 		private double priceEurPerKwh;
 
 		private Builder() {
@@ -26,6 +27,11 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 
 		public Builder setEnabled(boolean enabled) {
 			this.enabled = enabled;
+			return this;
+		}
+
+		public Builder setMode(Mode mode) {
+			this.mode = mode;
 			return this;
 		}
 
@@ -68,6 +74,11 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	@Override
 	public double priceEurPerKwh() {
 		return this.builder.priceEurPerKwh;
+	}
+
+	@Override
+	public Mode mode() {
+		return this.builder.mode;
 	}
 
 	@Override

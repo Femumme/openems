@@ -17,6 +17,9 @@ import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 	@AttributeDefinition(name = "Is enabled?", description = "Is this Component enabled?")
 	boolean enabled() default true;
 
+	@AttributeDefinition(name = "Mode", description = "Set the type of mode.")
+	Mode mode() default Mode.MANUAL_ON;
+
 	@AttributeDefinition(name = "Price [€/kWh]", description = "Fixed EVCS price in Euro per kWh (e.g. 0.35).")
 	double priceEurPerKwh() default 0.35;
 
