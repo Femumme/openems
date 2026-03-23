@@ -112,7 +112,11 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 		super.deactivate();
 	}
 
-	/** Replaces the clock for unit tests. Package-private. */
+	/**
+	 * Replaces the clock for unit tests. Package-private.
+	 *
+	 * @param clock the clock to use
+	 */
 	void setClock(Clock clock) {
 		this.clock = clock;
 	}
@@ -171,6 +175,8 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 	/**
 	 * Resolves the active override: when multiple sources have set an override,
 	 * the highest price wins (most conservative for grid protection).
+	 *
+	 * @return the winning override price, or {@code null} if no override is active
 	 */
 	private Double resolveActiveOverride() {
 		if (this.overrides.isEmpty()) {
