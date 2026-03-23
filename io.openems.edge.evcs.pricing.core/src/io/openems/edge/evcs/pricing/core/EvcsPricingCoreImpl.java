@@ -82,7 +82,7 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 		this.applyConfig(config);
 	}
 
-	private void applyConfig(Config config) {
+	void applyConfig(Config config) { // package-private for testing
 		this.cronExpression = new CronExpression(config.cronExpression());
 		this.absoluteMinPrice = config.absoluteMinPrice();
 		this.absoluteMaxPrice = config.absoluteMaxPrice();
@@ -90,6 +90,21 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 		this._setNextPriceChange(this.nextIntervalTick.toEpochMilli());
 		this.log.info("EVCS Pricing Core: cron={}, absolute=[{}, {}]",
 				config.cronExpression(), this.absoluteMinPrice, this.absoluteMaxPrice);
+		this.reclampLockedPrice();
+	}
+
+	/**
+	 * Re-clamps the currently locked PRICE channel to the new absolute bounds.
+	 * Called after config changes to take effect immediately without waiting for
+	 * the next cron tick.
+	 */
+	private void reclampLockedPrice() {
+		this.getPrice().asOptional().ifPresent(currentPrice -> {
+			var clamped = clamp(currentPrice, this.absoluteMinPrice, this.absoluteMaxPrice);
+			if (Double.compare(clamped, currentPrice) != 0) {
+				this._setPrice(clamped);
+			}
+		});
 	}
 
 	@Deactivate

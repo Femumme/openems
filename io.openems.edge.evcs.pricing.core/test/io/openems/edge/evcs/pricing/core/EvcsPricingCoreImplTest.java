@@ -346,6 +346,42 @@ public class EvcsPricingCoreImplTest {
 	}
 
 	// -------------------------------------------------------------------------
+	// Config change — immediate re-clamp
+	// -------------------------------------------------------------------------
+
+	/**
+	 * When absoluteMaxPrice is tightened via config change, the locked PRICE is
+	 * immediately clamped — it must not wait until the next cron tick.
+	 *
+	 * <p>
+	 * Cycle 1: lock price=0.80 via override. Cycle 2: call applyConfig with
+	 * absoluteMaxPrice=0.50 before controllers run — PRICE must be 0.50.
+	 */
+	@Test
+	public void configChange_clampsTightensLockedPrice() throws Exception {
+		var sut = new EvcsPricingCoreImpl();
+
+		var tightConfig = MyConfig.create() //
+				.setId("_evcsPricing") //
+				.setAlias("EVCS Pricing") //
+				.setEnabled(true) //
+				.setCronExpression("0 0 * * * *") //
+				.setAbsoluteMinPrice(0.00) //
+				.setAbsoluteMaxPrice(0.50) //
+				.build();
+
+		new ComponentTest(sut) //
+				.activate(defaultConfig()) // max=9.99
+				.next(new TestCase("lock price at 0.80") //
+						.onExecuteControllersCallbacks(() -> sut.setOverride("ctrl0", 0.80)) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.80)) //
+				.next(new TestCase("config tightens max to 0.50 — price clamped immediately") //
+						.onBeforeControllersCallbacks(() -> sut.applyConfig(tightConfig)) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.50)) //
+				.deactivate();
+	}
+
+	// -------------------------------------------------------------------------
 	// Interval tick promotes constraint-based price
 	// -------------------------------------------------------------------------
 
