@@ -33,7 +33,7 @@ testem.log
 #System Files
 .DS_Store
 .gradle/
-/generated/
+generated/
 
 ### Eclipse ###
 

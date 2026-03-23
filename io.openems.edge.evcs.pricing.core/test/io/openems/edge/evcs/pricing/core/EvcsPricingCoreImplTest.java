@@ -233,6 +233,57 @@ public class EvcsPricingCoreImplTest {
 	}
 
 	// -------------------------------------------------------------------------
+	// Floor only — no ceiling present
+	// -------------------------------------------------------------------------
+
+	/**
+	 * When only a floor is set (no ceiling), the price must rise to at least
+	 * the floor value, not stay at the previous locked value.
+	 *
+	 * <p>
+	 * Cycle 1: lock price=0.10 via override.
+	 * Cycle 2: remove override, add only floor=0.40 → price must become 0.40.
+	 */
+	@Test
+	public void floorOnly_priceMeetsFloor() throws Exception {
+		var sut = new EvcsPricingCoreImpl();
+
+		new ComponentTest(sut) //
+				.activate(defaultConfig()) //
+				.next(new TestCase("prime price") //
+						.onExecuteControllersCallbacks(() -> sut.setOverride("ctrl0", 0.10))) //
+				.next(new TestCase("floor only") //
+						.onExecuteControllersCallbacks(() -> {
+							sut.removeOverride("ctrl0");
+							sut.addPriceFloor("ctrl1", 0.40);
+						}) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.40)) //
+				.deactivate();
+	}
+
+	@Test
+	public void floorOnly_aboveAbsoluteMaxIsClamped() throws Exception {
+		var sut = new EvcsPricingCoreImpl();
+		var config = MyConfig.create() //
+				.setId("_evcsPricing").setAlias("EVCS Pricing").setEnabled(true) //
+				.setCronExpression("0 0 * * * *") //
+				.setAbsoluteMinPrice(0.00).setAbsoluteMaxPrice(0.50) //
+				.build();
+
+		new ComponentTest(sut) //
+				.activate(config) //
+				.next(new TestCase("prime price") //
+						.onExecuteControllersCallbacks(() -> sut.setOverride("ctrl0", 0.10))) //
+				.next(new TestCase("floor only above max") //
+						.onExecuteControllersCallbacks(() -> {
+							sut.removeOverride("ctrl0");
+							sut.addPriceFloor("ctrl1", 0.99); // above max=0.50
+						}) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.50)) // clamped
+				.deactivate();
+	}
+
+	// -------------------------------------------------------------------------
 	// Active override channels
 	// -------------------------------------------------------------------------
 

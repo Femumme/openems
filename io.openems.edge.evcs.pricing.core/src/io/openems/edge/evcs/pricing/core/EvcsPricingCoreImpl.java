@@ -177,17 +177,20 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 	}
 
 	private double resolveConstraints() {
-		var ceiling = this.ceilings.values().stream()
-				.min(Double::compareTo);
-		if (ceiling.isEmpty()) {
-			// No constraints at all — keep the current price
-			var current = this.getPrice().asOptional();
-			return current.orElse(0.0);
+		var ceiling = this.ceilings.values().stream().min(Double::compareTo);
+		var floor = this.floors.values().stream().max(Double::compareTo);
+
+		if (ceiling.isEmpty() && floor.isEmpty()) {
+			// No constraints — keep the current locked price unchanged
+			return this.getPrice().asOptional().orElse(0.0);
 		}
-		var floor = this.floors.values().stream()
-				.max(Double::compareTo)
-				.orElse(0.0);
-		return Math.max(floor, ceiling.get());
+		if (ceiling.isEmpty()) {
+			// Floor only — price must meet the floor
+			return floor.get();
+		}
+		// Ceiling present — enforce both: price = max(floor, ceiling)
+		// (floor > ceiling is allowed; the floor wins to protect minimum charging revenue)
+		return Math.max(floor.orElse(0.0), ceiling.get());
 	}
 
 	private static double clamp(double value, double min, double max) {
