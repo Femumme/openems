@@ -1,5 +1,6 @@
 package io.openems.edge.controller.evcs.pvpricing;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
@@ -136,5 +137,23 @@ public class ControllerEvcsPvPricingImplTest {
 				.deactivate();
 
 		assertNull(dummy.getLastCeilingPrice());
+	}
+
+	/**
+	 * On deactivate(), removeConstraint must be called with the controller ID.
+	 */
+	@Test
+	public void deactivate_removesConstraint() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		var sum = new DummySum().withProductionActivePower(1000);
+
+		new ControllerTest(new ControllerEvcsPvPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase()) //
+				.deactivate();
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
 	}
 }

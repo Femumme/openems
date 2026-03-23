@@ -78,6 +78,7 @@ public class ControllerEvcsBatteryPricingImpl extends AbstractOpenemsComponent
 	@Override
 	@Deactivate
 	protected void deactivate() {
+		this.evcsPricing.removeConstraint(this.id());
 		super.deactivate();
 	}
 

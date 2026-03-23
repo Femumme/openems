@@ -180,4 +180,22 @@ public class ControllerEvcsBatteryPricingImplTest {
 		assertNull(dummy.getLastFloorPrice());
 		assertNull(dummy.getLastCeilingPrice());
 	}
+
+	/**
+	 * On deactivate(), removeConstraint must be called with the controller ID.
+	 */
+	@Test
+	public void deactivate_removesConstraint() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		var sum = new DummySum().withEssSoc(80);
+
+		new ControllerTest(new ControllerEvcsBatteryPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase()) //
+				.deactivate();
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
+	}
 }

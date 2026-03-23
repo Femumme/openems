@@ -15,6 +15,7 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 	private Double lastCeilingPrice;
 	private String lastFloorSource;
 	private Double lastFloorPrice;
+	private String lastRemoveConstraintSource;
 
 	public DummyEvcsPricing() {
 		super(EvcsPricing.SINGLETON_COMPONENT_ID, //
@@ -63,6 +64,15 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 		return this.lastFloorPrice;
 	}
 
+	/**
+	 * Returns the source ID from the last {@link #removeConstraint} call.
+	 *
+	 * @return source or null if never called
+	 */
+	public String getLastRemoveConstraintSource() {
+		return this.lastRemoveConstraintSource;
+	}
+
 	@Override
 	public void addPriceCeiling(String source, double maxPrice) {
 		this.lastCeilingSource = source;
@@ -87,6 +97,6 @@ public class DummyEvcsPricing extends AbstractDummyOpenemsComponent<DummyEvcsPri
 
 	@Override
 	public void removeConstraint(String source) {
-		// no-op for tests
+		this.lastRemoveConstraintSource = source;
 	}
 }
