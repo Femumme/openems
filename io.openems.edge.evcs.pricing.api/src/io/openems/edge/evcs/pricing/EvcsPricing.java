@@ -204,6 +204,10 @@ public interface EvcsPricing extends OpenemsComponent {
 	 * When any override is active, constraint-based prices are ignored. The override
 	 * value becomes the locked price immediately.
 	 *
+	 * <p>
+	 * When multiple controllers set an override simultaneously, the highest price
+	 * wins.
+	 *
 	 * @param source the controller's component ID
 	 * @param price  the override price in EUR/kWh
 	 */

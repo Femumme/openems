@@ -145,16 +145,22 @@ public class EvcsPricingCoreImpl extends AbstractOpenemsComponent
 		this.lastOverrideValue = overridePrice;
 	}
 
+	/**
+	 * Resolves the active override: when multiple sources have set an override,
+	 * the highest price wins (most conservative for grid protection).
+	 */
 	private Double resolveActiveOverride() {
 		if (this.overrides.isEmpty()) {
 			this._setActiveOverrideSource(null);
 			this._setActiveOverrideValue(null);
 			return null;
 		}
-		var entry = this.overrides.entrySet().iterator().next();
-		this._setActiveOverrideSource(entry.getKey());
-		this._setActiveOverrideValue(entry.getValue());
-		return entry.getValue();
+		var winner = this.overrides.entrySet().stream()
+				.max(Map.Entry.comparingByValue())
+				.get(); // safe: overrides is non-empty
+		this._setActiveOverrideSource(winner.getKey());
+		this._setActiveOverrideValue(winner.getValue());
+		return winner.getValue();
 	}
 
 	private double computePrice(Double overridePrice) {

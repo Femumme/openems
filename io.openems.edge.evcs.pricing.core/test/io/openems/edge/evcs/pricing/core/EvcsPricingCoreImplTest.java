@@ -288,6 +288,26 @@ public class EvcsPricingCoreImplTest {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * When two overrides are set, the higher price wins.
+	 */
+	@Test
+	public void multipleOverrides_highestPriceWins() throws Exception {
+		var sut = new EvcsPricingCoreImpl();
+
+		new ComponentTest(sut) //
+				.activate(defaultConfig()) //
+				.next(new TestCase("two overrides") //
+						.onExecuteControllersCallbacks(() -> {
+							sut.setOverride("ctrl0", 0.25);
+							sut.setOverride("ctrl1", 0.75);
+						}) //
+						.output(EvcsPricing.ChannelId.PRICE, 0.75) //
+						.output(EvcsPricing.ChannelId.ACTIVE_OVERRIDE_SOURCE, "ctrl1") //
+						.output(EvcsPricing.ChannelId.ACTIVE_OVERRIDE_VALUE, 0.75)) //
+				.deactivate();
+	}
+
+	/**
 	 * When an override is active, ACTIVE_OVERRIDE_SOURCE and ACTIVE_OVERRIDE_VALUE
 	 * channels are populated.
 	 */
