@@ -23,6 +23,7 @@ import {Controller_Ess_TimeOfUseTariff} from "./Controller/Ess/TimeOfUseTariff/E
 import {AdministrationComponent} from "./Controller/Evcs/administration/administration.component";
 import {Controller_Evcs} from "./Controller/Evcs/Evcs";
 import { Controller_Evcs_FixedPricing } from "./Controller/Evcs/FixedPricing/Evcs_FixedPricing";
+import { Core_EvcsPricing } from "./Controller/Evcs/PricingDashboard/Evcs_PricingDashboard";
 import { ControllerEvseSingle } from "./Controller/Evse/EvseSingle.module";
 import { ControllerHeat } from "./Controller/Heat/HeatMyPv";
 import {
@@ -81,6 +82,7 @@ import {
     Controller_Ess_TimeOfUseTariff,
     Controller_Evcs,
     Controller_Evcs_FixedPricing,
+    Core_EvcsPricing,
     ControllerEvseSingle,
     ControllerHeat,
     Controller_Io_HeatingElement,

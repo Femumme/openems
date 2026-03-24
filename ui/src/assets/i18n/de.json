@@ -221,7 +221,15 @@
           "HYSTERESIS_INFO": "Um Ladeabbrüche aufgrund zu häufigen Startens/Pausierens des Ladevorgangs zu verhindern, wird der aktuell eingestellte Lademodus für die nächsten Minuten fortgesetzt.",
           "FixedPricing": {
             "price": "Konfigurierter Preis [€/kWh]",
-            "info": "Dieser Controller setzt einen festen EVCS-Preis, der an das Ladestations-Backend exportiert wird."
+            "info": "Dieser Controller setzt einen festen EVCS-Preis-Override, der an das Ladestations-Backend exportiert wird."
+          },
+          "PricingDashboard": {
+            "nextPrice": "Nächster geplanter Preis",
+            "nextChange": "Nächste Preisänderung",
+            "overrideActive": "Override aktiv",
+            "overrideValue": "Override-Wert",
+            "controllers": "Preis-Controller",
+            "noControllers": "Keine Preis-Controller konfiguriert."
           }
         },
         "Heatingelement": {

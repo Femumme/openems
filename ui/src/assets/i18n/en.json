@@ -221,7 +221,15 @@
           "HYSTERESIS_INFO": "For preventing charging interruptions due to frequent starting/pausing of the charing process, the charging mode currently selected will continue for the next few minutes.",
           "FixedPricing": {
             "price": "Configured Price [€/kWh]",
-            "info": "This controller sets a fixed EVCS price that is exported to the charging backend."
+            "info": "This controller sets a fixed EVCS price override that is exported to the charging backend."
+          },
+          "PricingDashboard": {
+            "nextPrice": "Next Planned Price",
+            "nextChange": "Next Price Change",
+            "overrideActive": "Override Active",
+            "overrideValue": "Override Value",
+            "controllers": "Pricing Controllers",
+            "noControllers": "No pricing controllers configured."
           }
         },
         "Heatingelement": {

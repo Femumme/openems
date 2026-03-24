@@ -173,6 +173,11 @@
                 <Controller_Evcs_FixedPricing [componentId]="widget.componentId">
                 </Controller_Evcs_FixedPricing>
               </ion-col>
+
+              <ion-col size="12" *ngSwitchCase="'Core.EvcsPricing'" size-lg="6" class="ion-no-padding">
+                <Core_EvcsPricing [componentId]="widget.componentId">
+                </Core_EvcsPricing>
+              </ion-col>
             </ng-container>
 
           </ion-row>

@@ -36,6 +36,7 @@ export enum WidgetFactory {
     "Controller.Ess.Time-Of-Use-Tariff.Discharge",
     "Controller.Ess.Time-Of-Use-Tariff",
     "Controller.Evcs.FixedPricing",
+    "Core.EvcsPricing",
     "Controller.IO.ChannelSingleThreshold",
     "Controller.Io.FixDigitalOutput",
     "Controller.IO.HeatingElement",
