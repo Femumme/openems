@@ -209,6 +209,7 @@
 	bnd.identity;id='io.openems.edge.controller.evcs.fixedpricing',\
 	bnd.identity;id='io.openems.edge.controller.evcs.pvpricing',\
 	bnd.identity;id='io.openems.edge.controller.evcs.batterypricing',\
+	bnd.identity;id='io.openems.edge.controller.evcs.gridpricing',\
 	bnd.identity;id='io.openems.edge.evcs.pricing.eaaze',\
 	bnd.identity;id='io.openems.edge.evcs.pricing.mumaxdisplay',\
 	
@@ -474,4 +475,5 @@
 	io.openems.edge.controller.evcs.pvpricing;version=snapshot,\
 	io.openems.edge.evcs.pricing.eaaze;version=snapshot,\
 	io.openems.edge.evcs.pricing.mumaxdisplay;version=snapshot,\
-	io.openems.edge.controller.evcs.batterypricing;version=snapshot
+	io.openems.edge.controller.evcs.batterypricing;version=snapshot,\
+	io.openems.edge.controller.evcs.gridpricing;version=snapshot
