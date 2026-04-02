@@ -1,0 +1,49 @@
+[tools]
+java = "21"
+
+[tasks."build:edge"]
+description = "Build the Edge JAR"
+run = "./gradlew buildEdge"
+
+[tasks."build:ui"]
+description = "Build the UI for production"
+dir = "ui"
+run = "ng build -c 'openems,openems-edge-prod,prod'"
+
+[tasks."run:edge"]
+description = "Run the Edge locally (requires built JAR and edge-data-dir/)"
+run = """
+data_path="${EDGE_DATA_DIR:-$MISE_PROJECT_DIR/edge-data-dir}"
+java -Dfelix.cm.dir="$data_path" -jar ./build/openems-edge.jar
+"""
+
+[tasks."run:ui"]
+description = "Start the UI dev server with hot reload"
+dir = "ui"
+run = "ng serve -o -c openems-edge-dev"
+
+[tasks.test]
+description = "Run all Java tests"
+run = "./gradlew test"
+
+[tasks."test:ui"]
+description = "Run UI tests with coverage"
+dir = "ui"
+run = "npm run test -- --code-coverage --no-watch --browsers=ChromeHeadlessCI"
+
+[tasks.lint]
+description = "Run Checkstyle on all Java bundles"
+run = "./gradlew checkstyleAll"
+
+[tasks."lint:ui"]
+description = "Lint the UI codebase"
+dir = "ui"
+run = "node_modules/.bin/ng lint"
+
+[tasks.resolve]
+description = "Resolve OSGi bndrun files after bundle changes"
+run = "./gradlew resolve"
+
+[tasks."start:remote-edge"]
+description = "Start remote Edge via Docker Compose"
+run = "docker-compose -f tools/docker/edge/docker-compose.yml up --force-recreate -d"

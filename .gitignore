@@ -230,3 +230,9 @@ io.openems.edge.application/c:/
 
 ### Debian ###
 !tools/debian/**
+
+### Mumme-IT local dev ###
+/edge-data-dir/
+/config_*
+.DS_Store
+.settings/

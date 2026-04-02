@@ -1,0 +1,29 @@
+#!/bin/bash
+#MISE description="Publish Edge JAR and UI build to openems-build repo"
+
+set -e
+
+build_repo="../openems-build"
+
+if [ ! -d "$build_repo" ]; then
+    echo "Error: openems-build repo not found at $build_repo" >&2
+    exit 1
+fi
+
+current_version=$(cat "$build_repo/build/latest/version")
+new_version=$((current_version + 1))
+
+mkdir -p "$build_repo/build/$new_version"
+echo "$new_version" > "$build_repo/build/$new_version/version"
+
+cp ./build/openems-edge.jar "$build_repo/build/$new_version/openems-edge.jar"
+
+(cd ./ui/target && zip -r ../../build/ui.zip ./*)
+cp ./build/ui.zip "$build_repo/build/$new_version/ui.zip"
+
+rm -rf "$build_repo/build/latest"
+cp -r "$build_repo/build/$new_version" "$build_repo/build/latest"
+
+(cd "$build_repo" && git add . && git commit -m "publish build $new_version" && git push)
+
+echo "done — published build $new_version"

@@ -1,0 +1,55 @@
+#!/bin/bash
+#MISE description="Copy OSGi config between edges (args: from to, defaults: pi revpi)"
+
+set -e
+
+get_host() {
+    case $1 in
+        pi) echo "192.168.89.204" ;;
+        revpi) echo "revpi134791.local" ;;
+        *) echo "unknown host: $1" >&2 && exit 1 ;;
+    esac
+}
+
+get_user() {
+    case $1 in
+        pi) echo "admin" ;;
+        revpi) echo "pi" ;;
+        *) echo "unknown host: $1" >&2 && exit 1 ;;
+    esac
+}
+
+from="${1:-pi}"
+to="${2:-revpi}"
+
+from_host=$(get_host "$from")
+from_user=$(get_user "$from")
+to_host=$(get_host "$to")
+to_user=$(get_user "$to")
+
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${RED}WARNING: You are about to copy config from '${from}' to '${to}'.${NC}"
+echo -e "\n${CYAN}Host Configuration:${NC}"
+printf "%-20s %-20s\n" "From Host:" "$from_host"
+printf "%-20s %-20s\n" "To Host:" "$to_host"
+
+read -p "Are you sure you want to continue? (yes/no): " confirm
+
+if [[ ! "$confirm" =~ ^[Yy][Ee][Ss]$ ]]; then
+    echo "Deployment aborted."
+    exit 1
+fi
+
+mkdir -p "./config_$from"
+
+echo -e "${CYAN}fetching config from $from_host...${NC}"
+scp -r "$from_user@$from_host:/etc/openems.d/*" "./config_$from/"
+
+echo -e "${GREEN}copying config to $to_host...${NC}"
+tar czf - -C "./config_$from" . | ssh "$to_user@$to_host" "sudo tar xzf - -C /etc/openems.d"
+
+echo -e "${GREEN}done${NC}"

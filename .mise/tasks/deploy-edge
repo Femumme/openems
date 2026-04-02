@@ -1,0 +1,43 @@
+#!/bin/bash
+#MISE description="Deploy Edge JAR to a remote Pi (arg: edge target, default: pi)"
+
+set -e
+
+get_host() {
+    case $1 in
+        pi) echo "192.168.89.204" ;;
+        revpi) echo "revpi134791.local" ;;
+        *) echo "unknown host: $1" >&2 && exit 1 ;;
+    esac
+}
+
+get_user() {
+    case $1 in
+        pi) echo "admin" ;;
+        revpi) echo "pi" ;;
+        *) echo "unknown host: $1" >&2 && exit 1 ;;
+    esac
+}
+
+edge="${1:-pi}"
+host=$(get_host "$edge")
+user=$(get_user "$edge")
+
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${RED}WARNING: You are about to deploy to edge '${edge}' on host '${host}'.${NC}"
+read -p "Are you sure you want to continue? (yes/no): " confirm
+
+if [[ ! "$confirm" =~ ^[Yy][Ee][Ss]$ ]]; then
+    echo "Deployment aborted."
+    exit 1
+fi
+
+echo "copying build to $edge..."
+scp ./build/openems-edge.jar "$user@$host:/usr/lib/openems/openems.jar"
+
+echo "restarting openems..."
+ssh "$user@$host" "sudo systemctl restart openems"
+
+echo "done"
