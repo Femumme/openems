@@ -157,4 +157,98 @@ public class ControllerEvcsPvPricingImplTest {
 
 		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
 	}
+
+	/**
+	 * Two-cycle accumulation: RollingAverage must average both samples, not
+	 * just the last one.
+	 *
+	 * <p>
+	 * Cycle 1: PV=8000W (full production) → ceiling=minCeiling=0.25.
+	 * Cycle 2: PV=500W (at threshold) → if only latest: ceiling=maxCeiling=0.55.
+	 * With rolling average of (8000+500)/2=4250W:
+	 * ratio=(4250-500)/(8000-500)=0.5 → ceiling=0.55-0.5*(0.55-0.25)=0.40.
+	 *
+	 * <p>
+	 * Window=60 min means both samples are within the window.
+	 */
+	@Test
+	public void twoCycleAccumulation_averagesBothSamples() throws Exception {
+		var dummy = new DummyEvcsPricing();
+
+		// Use a 60-minute window so both cycle 1 and cycle 2 samples stay in the window
+		var config = MyConfig.create() //
+				.setId(CTRL_ID) //
+				.setMaxCeiling(MAX_CEILING) //
+				.setMinCeiling(MIN_CEILING) //
+				.setPvThreshold(PV_THRESHOLD) //
+				.setPvFullProduction(PV_FULL_PRODUCTION) //
+				.setDataCollectionWindowMinutes(60) //
+				.build();
+
+		new ControllerTest(new ControllerEvcsPvPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", new DummySum().withProductionActivePower(8000)) //
+				.activate(config) //
+				.next(new TestCase() //
+						// cycle 1: only 8000 in window → ceiling = minCeiling = 0.25
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, MIN_CEILING)) //
+				.addReference("sum", new DummySum().withProductionActivePower(500)) //
+				.next(new TestCase() //
+						// cycle 2: avg(8000,500)=4250 → ratio=0.5 → ceiling=0.40
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, 0.40)) //
+				.deactivate();
+	}
+
+	/**
+	 * When modified() is called with enabled=false, removeConstraint must be called
+	 * immediately — before deactivate() — so stale ceilings are not carried over.
+	 */
+	@Test
+	public void disabledViaConfig_removesConstraint() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		var sum = new DummySum().withProductionActivePower(1000);
+
+		var test = new ControllerTest(new ControllerEvcsPvPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase()) //
+				.modified(MyConfig.create() //
+						.setId(CTRL_ID) //
+						.setEnabled(false) //
+						.setMaxCeiling(MAX_CEILING) //
+						.setMinCeiling(MIN_CEILING) //
+						.setPvThreshold(PV_THRESHOLD) //
+						.setPvFullProduction(PV_FULL_PRODUCTION) //
+						.setDataCollectionWindowMinutes(1) //
+						.build());
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
+
+		dummy.reset();
+		test.deactivate();
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
+	}
+
+	/**
+	 * PV above full production: Math.min(1.0, ratio) clamps ratio to 1.0,
+	 * so ceiling must equal minCeiling regardless of how far above pvFullProduction.
+	 */
+	@Test
+	public void pvAboveFullProduction_clampsRatioToOne() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		// 12000W >> pvFullProduction=8000W → ratio would be >1 without clamping
+		var sum = new DummySum().withProductionActivePower(12000);
+
+		new ControllerTest(new ControllerEvcsPvPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase() //
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, MIN_CEILING)) //
+				.deactivate();
+
+		assertEquals(Double.valueOf(MIN_CEILING), dummy.getLastCeilingPrice());
+	}
 }

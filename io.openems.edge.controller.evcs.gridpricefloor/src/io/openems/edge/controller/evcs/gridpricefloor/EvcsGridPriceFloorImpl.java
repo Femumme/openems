@@ -1,4 +1,4 @@
-package io.openems.edge.controller.evcs.gridpricing;
+package io.openems.edge.controller.evcs.gridpricefloor;
 
 import static io.openems.common.utils.DateUtils.roundDownToQuarter;
 
@@ -26,23 +26,22 @@ import io.openems.edge.evcs.pricing.EvcsPricingUtils;
 import io.openems.edge.timeofusetariff.api.TimeOfUseTariff;
 
 /**
- * Sets EVCS price ceiling when average grid price is below a configured
- * threshold.
+ * Sets the forecasted average grid electricity price as a price floor in EvcsPricing.
  *
  * <p>
  * Prices are sourced from an optional {@link TimeOfUseTariff} reference and
- * averaged over the lookahead window (now → next price change). When the
- * average falls below {@code priceThreshold} (ct/kWh), a ceiling of
- * {@code ceilingPrice} (ct/kWh) is submitted to {@link EvcsPricing}.
+ * averaged over the lookahead window (now → next price change). The configured
+ * {@code margin} (ct/kWh) is added to the average before submission to
+ * {@link EvcsPricing}.
  */
 @Designate(ocd = Config.class, factory = true)
 @Component(//
-		name = "Controller.Evcs.GridPricing", //
+		name = "Controller.Evcs.GridPriceFloor", //
 		immediate = true, //
 		configurationPolicy = ConfigurationPolicy.REQUIRE //
 )
-public class ControllerEvcsGridPricingImpl extends AbstractOpenemsComponent
-		implements ControllerEvcsGridPricing, Controller, OpenemsComponent, EvcsPricingController {
+public class EvcsGridPriceFloorImpl extends AbstractOpenemsComponent
+		implements EvcsGridPriceFloor, Controller, OpenemsComponent, EvcsPricingController {
 
 	@Reference(target = "(id=" + EvcsPricing.SINGLETON_COMPONENT_ID + ")")
 	private EvcsPricing evcsPricing;
@@ -50,7 +49,6 @@ public class ControllerEvcsGridPricingImpl extends AbstractOpenemsComponent
 	@Reference
 	private ComponentManager componentManager;
 
-	// Dynamic optional — may disappear at runtime when the tariff bundle stops
 	@Reference(policy = ReferencePolicy.DYNAMIC, //
 			policyOption = ReferencePolicyOption.GREEDY, //
 			cardinality = ReferenceCardinality.OPTIONAL)
@@ -58,11 +56,11 @@ public class ControllerEvcsGridPricingImpl extends AbstractOpenemsComponent
 
 	private volatile Config config;
 
-	public ControllerEvcsGridPricingImpl() {
+	public EvcsGridPriceFloorImpl() {
 		super(//
 				OpenemsComponent.ChannelId.values(), //
 				Controller.ChannelId.values(), //
-				ControllerEvcsGridPricing.ChannelId.values(), //
+				EvcsGridPriceFloor.ChannelId.values(), //
 				EvcsPricingController.ChannelId.values() //
 		);
 	}
@@ -77,8 +75,6 @@ public class ControllerEvcsGridPricingImpl extends AbstractOpenemsComponent
 	private void modified(ComponentContext context, Config config) {
 		super.modified(context, config.id(), config.alias(), config.enabled());
 		this.applyConfig(config);
-		// Remove stale constraint immediately when the component is disabled so the
-		// pricing core does not carry it over to the next cycle
 		if (!config.enabled()) {
 			this.evcsPricing.removeConstraint(this.id());
 		}
@@ -109,34 +105,18 @@ public class ControllerEvcsGridPricingImpl extends AbstractOpenemsComponent
 		var avgCtKwh = avgOpt.getAsDouble();
 		this._setAverageGridPrice(avgCtKwh);
 
-		if (avgCtKwh < this.config.priceThreshold()) {
-			this.applyCeiling();
-		} else {
-			this.clearConstraintChannels();
-		}
+		this.applyFloor(avgCtKwh);
 	}
 
-	/**
-	 * Submits a ceiling price and updates the controller's own channels.
-	 *
-	 * <p>
-	 * Converts ct/kWh → EUR/kWh before submission.
-	 */
-	private void applyCeiling() {
-		// ct/kWh ÷ 100 → EUR/kWh
-		var priceEurKwh = EvcsPricingUtils.roundPrice(this.config.ceilingPrice() / 100.0);
-		this.evcsPricing.addPriceCeiling(this.id(), priceEurKwh);
-		this._setActiveCeiling(priceEurKwh);
-		this._setActiveFloor(null);
+	private void applyFloor(double avgCtKwh) {
+		var floorCtKwh = avgCtKwh + this.config.margin();
+		var floorEurKwh = EvcsPricingUtils.roundPrice(floorCtKwh / 100.0);
+		this.evcsPricing.addPriceFloor(this.id(), floorEurKwh);
+		this._setActiveFloor(floorEurKwh);
+		this._setActiveCeiling(null);
 		this._setActiveOverride(null);
 	}
 
-	/**
-	 * Nulls all channels including AVERAGE_GRID_PRICE.
-	 *
-	 * <p>
-	 * Called when no prices are available at all.
-	 */
 	private void clearChannels() {
 		this.clearConstraintChannels();
 		this._setAverageGridPrice(null);

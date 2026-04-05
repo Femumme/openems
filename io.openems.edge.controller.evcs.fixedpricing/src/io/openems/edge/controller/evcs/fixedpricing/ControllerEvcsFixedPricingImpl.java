@@ -1,8 +1,5 @@
 package io.openems.edge.controller.evcs.fixedpricing;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -11,8 +8,6 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.Designate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.openems.common.exceptions.OpenemsError.OpenemsNamedException;
 import io.openems.edge.common.component.AbstractOpenemsComponent;
@@ -20,6 +15,7 @@ import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.controller.api.Controller;
 import io.openems.edge.evcs.pricing.EvcsPricing;
 import io.openems.edge.evcs.pricing.EvcsPricingController;
+import io.openems.edge.evcs.pricing.EvcsPricingUtils;
 
 /**
  * Controller that sets a fixed EVCS price as an immediate override.
@@ -36,12 +32,10 @@ import io.openems.edge.evcs.pricing.EvcsPricingController;
 public class ControllerEvcsFixedPricingImpl extends AbstractOpenemsComponent
 		implements ControllerEvcsFixedPricing, Controller, OpenemsComponent, EvcsPricingController {
 
-	private final Logger log = LoggerFactory.getLogger(ControllerEvcsFixedPricingImpl.class);
-
 	@Reference(target = "(id=" + EvcsPricing.SINGLETON_COMPONENT_ID + ")")
 	private EvcsPricing evcsPricing;
 
-	private Config config;
+	private volatile Config config;
 
 	public ControllerEvcsFixedPricingImpl() {
 		super(//
@@ -62,13 +56,13 @@ public class ControllerEvcsFixedPricingImpl extends AbstractOpenemsComponent
 	private void modified(ComponentContext context, Config config) {
 		super.modified(context, config.id(), config.alias(), config.enabled());
 		this.applyConfig(config);
+		if (!config.enabled()) {
+			this.evcsPricing.removeOverride(this.id());
+		}
 	}
 
-	private synchronized void applyConfig(Config config) {
+	private void applyConfig(Config config) {
 		this.config = config;
-		if (this.config.mode() == Mode.MANUAL_ON) {
-			this.log.info("Setting EVCS price override to {} EUR/kWh", roundPrice(this.config.priceEurPerKwh()));
-		}
 	}
 
 	@Override
@@ -80,12 +74,9 @@ public class ControllerEvcsFixedPricingImpl extends AbstractOpenemsComponent
 
 	@Override
 	public void run() throws OpenemsNamedException {
-		if (this.config == null) {
-			return;
-		}
 		switch (this.config.mode()) {
 		case MANUAL_ON -> {
-			var price = roundPrice(this.config.priceEurPerKwh());
+			var price = EvcsPricingUtils.roundPrice(this.config.priceEurPerKwh());
 			this.evcsPricing.setOverride(this.id(), price);
 			this._setActiveOverride(price);
 			this._setActiveCeiling(null);
@@ -96,11 +87,5 @@ public class ControllerEvcsFixedPricingImpl extends AbstractOpenemsComponent
 			this._setActiveOverride(null);
 		}
 		}
-	}
-
-	private static double roundPrice(double price) {
-		return BigDecimal.valueOf(price)
-				.setScale(4, RoundingMode.HALF_UP)
-				.doubleValue();
 	}
 }

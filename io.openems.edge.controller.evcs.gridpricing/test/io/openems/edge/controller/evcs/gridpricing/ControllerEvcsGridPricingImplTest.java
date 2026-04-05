@@ -431,4 +431,38 @@ public class ControllerEvcsGridPricingImplTest {
 
 		assertEquals(Double.valueOf(CEILING_PRICE_EUR), dummy.getLastCeilingPrice());
 	}
+
+	/**
+	 * NEXT_PRICE_CHANGE only 5 min away: minimum 15-min window enforced,
+	 * pricing is still applied (ceiling set because avg is below threshold).
+	 *
+	 * <p>
+	 * With q0=10 Currency/MWh → 1.0 ct/kWh &lt; 2.0 threshold → ceiling applied.
+	 * If the near-future timestamp were used as-is (5 min window), getBetween
+	 * would return an empty stream and no ceiling would be set.
+	 */
+	@Test
+	public void nextPriceChangeLessThan15Min_enforcesMinimumWindow() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		var now = ZonedDateTime.now(CLOCK);
+		// 5 min is strictly less than the 15-min minimum window
+		var nearFutureMs = now.plusMinutes(5).toInstant().toEpochMilli();
+		dummy._setNextPriceChange(nearFutureMs);
+		dummy.getNextPriceChangeChannel().nextProcessImage();
+
+		// q0=10 Currency/MWh → 1.0 ct/kWh < 2.0 threshold → ceiling must be applied
+		var tariff = DummyTimeOfUseTariffProvider.fromQuarterlyPrices(CLOCK, 10.0, 100.0, 100.0,
+				100.0);
+
+		new ControllerTest(new ControllerEvcsGridPricingImpl()) //
+				.addReference("componentManager", new DummyComponentManager(CLOCK)) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("timeOfUseTariff", tariff) //
+				.activate(baseConfig()) //
+				.next(new TestCase() //
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, CEILING_PRICE_EUR)) //
+				.deactivate();
+
+		assertEquals(Double.valueOf(CEILING_PRICE_EUR), dummy.getLastCeilingPrice());
+	}
 }

@@ -1,8 +1,5 @@
 package io.openems.edge.controller.evcs.pvpricing;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -19,6 +16,7 @@ import io.openems.edge.common.sum.Sum;
 import io.openems.edge.controller.api.Controller;
 import io.openems.edge.evcs.pricing.EvcsPricing;
 import io.openems.edge.evcs.pricing.EvcsPricingController;
+import io.openems.edge.evcs.pricing.EvcsPricingUtils;
 import io.openems.edge.evcs.pricing.util.RollingAverage;
 
 /**
@@ -44,7 +42,7 @@ public class ControllerEvcsPvPricingImpl extends AbstractOpenemsComponent
 	@Reference(target = "(id=" + Sum.SINGLETON_COMPONENT_ID + ")")
 	private Sum sum;
 
-	private Config config;
+	private volatile Config config;
 	private RollingAverage pvAverage;
 
 	public ControllerEvcsPvPricingImpl() {
@@ -66,11 +64,16 @@ public class ControllerEvcsPvPricingImpl extends AbstractOpenemsComponent
 	private void modified(ComponentContext context, Config config) {
 		super.modified(context, config.id(), config.alias(), config.enabled());
 		this.applyConfig(config);
+		if (!config.enabled()) {
+			this.evcsPricing.removeConstraint(this.id());
+		}
 	}
 
 	private void applyConfig(Config config) {
+		if (this.config == null || config.dataCollectionWindowMinutes() != this.config.dataCollectionWindowMinutes()) {
+			this.pvAverage = new RollingAverage(config.dataCollectionWindowMinutes());
+		}
 		this.config = config;
-		this.pvAverage = new RollingAverage(config.dataCollectionWindowMinutes());
 	}
 
 	@Override
@@ -86,45 +89,31 @@ public class ControllerEvcsPvPricingImpl extends AbstractOpenemsComponent
 		try {
 			productionPower = this.sum.getProductionActivePower().getOrError();
 		} catch (OpenemsNamedException e) {
-			this.clearChannels();
+			this.clearConstraintChannels();
 			return;
 		}
 		this.pvAverage.add(productionPower);
 
 		var avgPv = this.pvAverage.getAverage();
 		if (avgPv.isEmpty()) {
-			this.clearChannels();
+			this.clearConstraintChannels();
 			return;
 		}
 
 		var avg = avgPv.getAsDouble();
 
 		if (avg < this.config.pvThreshold()) {
-			this.clearChannels();
+			this.clearConstraintChannels();
 			return;
 		}
 
-		var range = this.config.pvFullProduction() - this.config.pvThreshold();
-		var ratio = Math.min(1.0, (avg - this.config.pvThreshold()) / range);
-		var ceiling = this.config.maxCeiling()
-				- ratio * (this.config.maxCeiling() - this.config.minCeiling());
-		var price = roundPrice(ceiling);
+		var ceiling = EvcsPricingUtils.linearInterpolate(avg, this.config.pvThreshold(),
+				this.config.pvFullProduction(), this.config.maxCeiling(), this.config.minCeiling());
+		var price = EvcsPricingUtils.roundPrice(ceiling);
 
 		this.evcsPricing.addPriceCeiling(this.id(), price);
 		this._setActiveCeiling(price);
 		this._setActiveFloor(null);
 		this._setActiveOverride(null);
-	}
-
-	private void clearChannels() {
-		this._setActiveCeiling(null);
-		this._setActiveFloor(null);
-		this._setActiveOverride(null);
-	}
-
-	private static double roundPrice(double price) {
-		return BigDecimal.valueOf(price)
-				.setScale(4, RoundingMode.HALF_UP)
-				.doubleValue();
 	}
 }

@@ -88,7 +88,6 @@
 	bnd.identity;id='io.openems.edge.controller.ess.reactivepowervoltagecharacteristic',\
 	bnd.identity;id='io.openems.edge.controller.ess.selltogridlimit',\
 	bnd.identity;id='io.openems.edge.controller.ess.standby',\
-	bnd.identity;id='io.openems.edge.controller.ess.timeframe',\
 	bnd.identity;id='io.openems.edge.controller.ess.timeofusetariff',\
 	bnd.identity;id='io.openems.edge.controller.evcs',\
 	bnd.identity;id='io.openems.edge.controller.evcs.fixactivepower',\
@@ -210,6 +209,7 @@
 	bnd.identity;id='io.openems.edge.controller.evcs.pvpricing',\
 	bnd.identity;id='io.openems.edge.controller.evcs.batterypricing',\
 	bnd.identity;id='io.openems.edge.controller.evcs.gridpricing',\
+	bnd.identity;id='io.openems.edge.controller.evcs.gridpricefloor',\
 	bnd.identity;id='io.openems.edge.evcs.pricing.eaaze',\
 	bnd.identity;id='io.openems.edge.evcs.pricing.mumaxdisplay',\
 	
@@ -468,7 +468,6 @@
 	reactive-streams;version='[1.0.4,1.0.5)',\
 	rrd4j;version='[3.9.0,3.9.1)',\
 	stax2-api;version='[4.2.2,4.2.3)',\
-	io.openems.wrapper.okhttp;version=snapshot,\
 	io.openems.edge.evcs.pricing.api;version=snapshot,\
 	io.openems.edge.evcs.pricing.core;version=snapshot,\
 	io.openems.edge.controller.evcs.fixedpricing;version=snapshot,\
@@ -476,4 +475,5 @@
 	io.openems.edge.evcs.pricing.eaaze;version=snapshot,\
 	io.openems.edge.evcs.pricing.mumaxdisplay;version=snapshot,\
 	io.openems.edge.controller.evcs.batterypricing;version=snapshot,\
-	io.openems.edge.controller.evcs.gridpricing;version=snapshot
+	io.openems.edge.controller.evcs.gridpricing;version=snapshot,\
+	io.openems.edge.controller.evcs.gridpricefloor;version=snapshot

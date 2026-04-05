@@ -1,8 +1,5 @@
 package io.openems.edge.controller.evcs.batterypricing;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -19,6 +16,7 @@ import io.openems.edge.common.sum.Sum;
 import io.openems.edge.controller.api.Controller;
 import io.openems.edge.evcs.pricing.EvcsPricing;
 import io.openems.edge.evcs.pricing.EvcsPricingController;
+import io.openems.edge.evcs.pricing.EvcsPricingUtils;
 import io.openems.edge.evcs.pricing.util.RollingAverage;
 
 /**
@@ -46,7 +44,7 @@ public class ControllerEvcsBatteryPricingImpl extends AbstractOpenemsComponent
 	@Reference(target = "(id=" + Sum.SINGLETON_COMPONENT_ID + ")")
 	private Sum sum;
 
-	private Config config;
+	private volatile Config config;
 	private RollingAverage socAverage;
 
 	public ControllerEvcsBatteryPricingImpl() {
@@ -68,11 +66,16 @@ public class ControllerEvcsBatteryPricingImpl extends AbstractOpenemsComponent
 	private void modified(ComponentContext context, Config config) {
 		super.modified(context, config.id(), config.alias(), config.enabled());
 		this.applyConfig(config);
+		if (!config.enabled()) {
+			this.evcsPricing.removeConstraint(this.id());
+		}
 	}
 
 	private void applyConfig(Config config) {
+		if (this.config == null || config.dataCollectionWindowMinutes() != this.config.dataCollectionWindowMinutes()) {
+			this.socAverage = new RollingAverage(config.dataCollectionWindowMinutes());
+		}
 		this.config = config;
-		this.socAverage = new RollingAverage(config.dataCollectionWindowMinutes());
 	}
 
 	@Override
@@ -88,51 +91,37 @@ public class ControllerEvcsBatteryPricingImpl extends AbstractOpenemsComponent
 		try {
 			soc = this.sum.getEssSoc().getOrError();
 		} catch (InvalidValueException e) {
-			this.clearChannels();
+			this.clearConstraintChannels();
 			return;
 		}
 		this.socAverage.add(soc);
 
 		var avgSoc = this.socAverage.getAverage();
 		if (avgSoc.isEmpty()) {
-			this.clearChannels();
+			this.clearConstraintChannels();
 			return;
 		}
 
 		var avg = avgSoc.getAsDouble();
 
 		if (avg < this.config.lowSocThreshold()) {
-			var price = roundPrice(this.config.lowSocFloorPrice());
+			var price = EvcsPricingUtils.roundPrice(this.config.lowSocFloorPrice());
 			this.evcsPricing.addPriceFloor(this.id(), price);
 			this._setActiveFloor(price);
 			this._setActiveCeiling(null);
 			this._setActiveOverride(null);
 
 		} else if (avg >= this.config.highSocThreshold()) {
-			var range = 100.0 - this.config.highSocThreshold();
-			var ratio = Math.min(1.0, (avg - this.config.highSocThreshold()) / range);
-			var ceiling = this.config.highSocCeilPrice()
-					- ratio * (this.config.highSocCeilPrice() - this.config.fullCeilPrice());
-			var price = roundPrice(ceiling);
+			var ceiling = EvcsPricingUtils.linearInterpolate(avg, this.config.highSocThreshold(),
+					100.0, this.config.highSocCeilPrice(), this.config.fullCeilPrice());
+			var price = EvcsPricingUtils.roundPrice(ceiling);
 			this.evcsPricing.addPriceCeiling(this.id(), price);
 			this._setActiveCeiling(price);
 			this._setActiveFloor(null);
 			this._setActiveOverride(null);
 
 		} else {
-			this.clearChannels();
+			this.clearConstraintChannels();
 		}
-	}
-
-	private void clearChannels() {
-		this._setActiveCeiling(null);
-		this._setActiveFloor(null);
-		this._setActiveOverride(null);
-	}
-
-	private static double roundPrice(double price) {
-		return BigDecimal.valueOf(price)
-				.setScale(4, RoundingMode.HALF_UP)
-				.doubleValue();
 	}
 }

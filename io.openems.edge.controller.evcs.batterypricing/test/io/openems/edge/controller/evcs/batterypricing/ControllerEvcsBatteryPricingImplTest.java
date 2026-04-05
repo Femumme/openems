@@ -199,4 +199,105 @@ public class ControllerEvcsBatteryPricingImplTest {
 
 		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
 	}
+
+	/**
+	 * Two-cycle accumulation: RollingAverage must average both SoC samples, not
+	 * just the latest.
+	 *
+	 * <p>
+	 * Cycle 1: SoC=100% (full) → ceiling=fullCeilPrice=0.35.
+	 * Cycle 2: SoC=80% (at high threshold) → if only latest: ceiling=highSocCeilPrice=0.55.
+	 * With rolling average of (100+80)/2=90%:
+	 * range=20, ratio=(90-80)/20=0.5 → ceiling=0.55-0.5*(0.55-0.35)=0.45.
+	 *
+	 * <p>
+	 * Window=60 min means both samples are within the window.
+	 */
+	@Test
+	public void twoCycleAccumulation_averagesBothSamples() throws Exception {
+		var dummy = new DummyEvcsPricing();
+
+		// Use a 60-minute window so both cycle 1 and cycle 2 samples stay in the window
+		var config = MyConfig.create() //
+				.setId(CTRL_ID) //
+				.setAlias("Test Battery Pricing Controller") //
+				.setLowSocThreshold(LOW_SOC_THRESHOLD) //
+				.setHighSocThreshold(HIGH_SOC_THRESHOLD) //
+				.setLowSocFloorPrice(LOW_SOC_FLOOR_PRICE) //
+				.setHighSocCeilPrice(HIGH_SOC_CEIL_PRICE) //
+				.setFullCeilPrice(FULL_CEIL_PRICE) //
+				.setDataCollectionWindowMinutes(60) //
+				.build();
+
+		new ControllerTest(new ControllerEvcsBatteryPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", new DummySum().withEssSoc(100)) //
+				.activate(config) //
+				.next(new TestCase() //
+						// cycle 1: only SoC=100 in window → ceiling = fullCeilPrice = 0.35
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, FULL_CEIL_PRICE)) //
+				.addReference("sum", new DummySum().withEssSoc(80)) //
+				.next(new TestCase() //
+						// cycle 2: avg(100,80)=90 → ratio=0.5 → ceiling=0.45
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, 0.45)) //
+				.deactivate();
+	}
+
+	/**
+	 * When modified() is called with enabled=false, removeConstraint must be called
+	 * immediately — before deactivate() — so stale floors/ceilings are not carried over.
+	 */
+	@Test
+	public void disabledViaConfig_removesConstraint() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		var sum = new DummySum().withEssSoc(80);
+
+		var test = new ControllerTest(new ControllerEvcsBatteryPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase()) //
+				.modified(MyConfig.create() //
+						.setId(CTRL_ID) //
+						.setAlias("Test Battery Pricing Controller") //
+						.setEnabled(false) //
+						.setLowSocThreshold(LOW_SOC_THRESHOLD) //
+						.setHighSocThreshold(HIGH_SOC_THRESHOLD) //
+						.setLowSocFloorPrice(LOW_SOC_FLOOR_PRICE) //
+						.setHighSocCeilPrice(HIGH_SOC_CEIL_PRICE) //
+						.setFullCeilPrice(FULL_CEIL_PRICE) //
+						.setDataCollectionWindowMinutes(1) //
+						.build());
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
+
+		dummy.reset();
+		test.deactivate();
+
+		assertEquals(CTRL_ID, dummy.getLastRemoveConstraintSource());
+	}
+
+	/**
+	 * SoC exactly at lowSocThreshold (not strictly below): the floor condition uses
+	 * {@code avg < lowSocThreshold}, so exactly at the threshold falls into the
+	 * "between thresholds" branch — channels must be cleared, no floor set.
+	 */
+	@Test
+	public void atLowSocThreshold_clearsChannels() throws Exception {
+		var dummy = new DummyEvcsPricing();
+		// SoC=30 is exactly at lowSocThreshold=30; avg < 30 is false → no floor
+		var sum = new DummySum().withEssSoc(LOW_SOC_THRESHOLD);
+
+		new ControllerTest(new ControllerEvcsBatteryPricingImpl()) //
+				.addReference("evcsPricing", dummy) //
+				.addReference("sum", sum) //
+				.activate(baseConfig()) //
+				.next(new TestCase() //
+						.output(EvcsPricingController.ChannelId.ACTIVE_FLOOR, null) //
+						.output(EvcsPricingController.ChannelId.ACTIVE_CEILING, null)) //
+				.deactivate();
+
+		assertNull(dummy.getLastFloorPrice());
+		assertNull(dummy.getLastCeilingPrice());
+	}
 }

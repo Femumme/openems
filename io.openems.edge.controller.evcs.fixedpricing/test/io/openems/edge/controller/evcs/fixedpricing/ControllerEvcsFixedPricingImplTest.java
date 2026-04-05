@@ -80,6 +80,7 @@ public class ControllerEvcsFixedPricingImplTest {
 				.deactivate();
 
 		assertNull(dummy.getLastSetOverridePrice());
+		assertEquals(CTRL_ID, dummy.getLastRemoveOverrideSource());
 	}
 
 	/**

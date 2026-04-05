@@ -98,4 +98,16 @@ public interface EvcsPricingController extends OpenemsComponent {
 	public default void _setActiveOverride(Double value) {
 		this.getActiveOverrideChannel().setNextValue(value);
 	}
+
+	/**
+	 * Clears all three constraint channels (ceiling, floor, override) to null.
+	 *
+	 * <p>
+	 * Called by controllers when no constraint is active in the current cycle.
+	 */
+	public default void clearConstraintChannels() {
+		this._setActiveCeiling(null);
+		this._setActiveFloor(null);
+		this._setActiveOverride(null);
+	}
 }
