@@ -11,6 +11,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 		private String pvInverterId;
 		private boolean asymmetricMode;
 		private int maximumSellToGridPower;
+		private String essId = "";
 
 		private Builder() {
 		}
@@ -37,6 +38,11 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 
 		public Builder setMaximumSellToGridPower(int maximumSellToGridPower) {
 			this.maximumSellToGridPower = maximumSellToGridPower;
+			return this;
+		}
+
+		public Builder setEssId(String essId) {
+			this.essId = essId;
 			return this;
 		}
 
@@ -79,5 +85,10 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	@Override
 	public int maximumSellToGridPower() {
 		return this.builder.maximumSellToGridPower;
+	}
+
+	@Override
+	public String ess_id() {
+		return this.builder.essId;
 	}
 }
