@@ -429,9 +429,14 @@ public interface ManagedSymmetricEss extends SymmetricEss {
 		pidFilter.setLimits(minPower, maxPower);
 
 		int currentActivePower = ess.getActivePower().orElse(0);
-		var pidOutput = pidFilter.applyPidFilter(currentActivePower, value);
-
-		ess.setActivePowerEquals(pidOutput);
+		var snapshot = pidFilter.saveState();
+		try {
+			var pidOutput = pidFilter.applyPidFilter(currentActivePower, value);
+			ess.setActivePowerEquals(pidOutput);
+		} catch (OpenemsNamedException e) {
+			pidFilter.restoreState(snapshot);
+			throw e;
+		}
 	}
 
 	/**

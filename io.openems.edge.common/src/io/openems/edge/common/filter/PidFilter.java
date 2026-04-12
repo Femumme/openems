@@ -110,6 +110,41 @@ public class PidFilter {
 	}
 
 	/**
+	 * Captures the mutable PID integrator state for later restoration.
+	 *
+	 * <p>This snapshot includes only the internal integrator state ({@code errorSum},
+	 * {@code lastInput}, {@code firstRun}). Output limits ({@code lowLimit},
+	 * {@code highLimit}) are not captured because they are set externally each cycle
+	 * via {@link #setLimits(Integer, Integer)}.
+	 *
+	 * @param errorSum  accumulated integral error
+	 * @param lastInput previous input sample
+	 * @param firstRun  whether the filter has not yet processed any input
+	 */
+	public record PidSnapshot(double errorSum, double lastInput, boolean firstRun) {
+	}
+
+	/**
+	 * Saves the current PID state as a snapshot.
+	 *
+	 * @return snapshot of current internal state
+	 */
+	public PidSnapshot saveState() {
+		return new PidSnapshot(this.errorSum, this.lastInput, this.firstRun);
+	}
+
+	/**
+	 * Restores PID state from a previously saved snapshot.
+	 *
+	 * @param snapshot the state to restore
+	 */
+	public void restoreState(PidSnapshot snapshot) {
+		this.errorSum = snapshot.errorSum();
+		this.lastInput = snapshot.lastInput();
+		this.firstRun = snapshot.firstRun();
+	}
+
+	/**
 	 * Reset the PID filter.
 	 *
 	 * <p>

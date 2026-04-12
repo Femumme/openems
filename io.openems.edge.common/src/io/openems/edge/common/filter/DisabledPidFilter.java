@@ -8,6 +8,8 @@ package io.openems.edge.common.filter;
  */
 public final class DisabledPidFilter extends PidFilter {
 
+	private static final PidSnapshot EMPTY_SNAPSHOT = new PidSnapshot(0, 0, true);
+
 	public static final DisabledPidFilter INSTANCE = new DisabledPidFilter();
 
 	private DisabledPidFilter() {
@@ -16,6 +18,16 @@ public final class DisabledPidFilter extends PidFilter {
 	@Override
 	public int applyPidFilter(int input, int target) {
 		return this.applyLowHighLimits(target);
+	}
+
+	@Override
+	public PidSnapshot saveState() {
+		return EMPTY_SNAPSHOT;
+	}
+
+	@Override
+	public void restoreState(PidSnapshot snapshot) {
+		// No-op: DisabledPidFilter has no mutable state to restore
 	}
 
 }

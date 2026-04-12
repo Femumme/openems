@@ -1,6 +1,9 @@
 package io.openems.edge.common.filter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -149,6 +152,110 @@ public class PidFilterTest {
 
 		// Cycle 10
 		this.t(p, 1000, 5000, 3600);
+	}
+
+	@Test
+	public void testSaveRestoreIdempotency() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-100000, 100000);
+
+		// Prime the filter to move past firstRun and accumulate some errorSum
+		p.applyPidFilter(0, 10000);
+
+		// Given: a stable mid-run state
+		var snapshot = p.saveState();
+
+		// When: apply with targetA, record output; restore; apply again with targetA
+		var output1 = p.applyPidFilter(5000, 15000);
+		p.restoreState(snapshot);
+		var output2 = p.applyPidFilter(5000, 15000);
+
+		// Then: same state produces same output
+		assertEquals(output1, output2);
+	}
+
+	@Test
+	public void testRestoreRollsBackErrorSum() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-100000, 100000);
+
+		// Prime the filter
+		p.applyPidFilter(0, 10000);
+
+		// Given: capture state before mutation
+		var snapshot = p.saveState();
+		var preErrorSum = snapshot.errorSum();
+
+		// When: apply opposing target to mutate errorSum, then restore
+		p.applyPidFilter(10000, -10000);
+		p.restoreState(snapshot);
+
+		// Then: errorSum is back to pre-mutation value
+		assertEquals(preErrorSum, p.saveState().errorSum(), 0.0);
+	}
+
+	@Test
+	public void testRestoreRollsBackLastInput() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-100000, 100000);
+
+		// Prime: two cycles to move past firstRun and set lastInput
+		p.applyPidFilter(0, 10000);    // firstRun cleared, lastInput = 0
+		p.applyPidFilter(5000, 10000); // lastInput = 5000
+
+		// Capture state with lastInput = 5000
+		var snapshot = p.saveState();
+
+		// Mutate: cycle that changes lastInput to 8000
+		p.applyPidFilter(8000, 10000);
+
+		// Branch A: restore snapshot (lastInput back to 5000), then query
+		p.restoreState(snapshot);
+		var outputAfterRestore = p.applyPidFilter(8000, 10000);
+
+		// Branch B: re-prime to same snapshot, then drive lastInput to 8000 without restoring
+		p.restoreState(snapshot);
+		p.applyPidFilter(8000, 10000); // lastInput now 8000
+		var outputWithoutRestore = p.applyPidFilter(8000, 10000);
+
+		// D-term = -0.1 * (input - lastInput)
+		// After restore: lastInput = 5000, so D = -0.1 * (8000 - 5000) = -300
+		// Without restore: lastInput = 8000, so D = -0.1 * (8000 - 8000) = 0
+		assertNotEquals("lastInput restoration must affect D-term output",
+				outputAfterRestore, outputWithoutRestore);
+	}
+
+	@Test
+	public void testRestoreResumesFirstRunBehavior() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-100000, 100000);
+
+		// Save fresh state (firstRun = true)
+		var freshSnapshot = p.saveState();
+		assertTrue("Snapshot should capture firstRun=true", freshSnapshot.firstRun());
+
+		// Run cycles to clear firstRun and accumulate state
+		p.applyPidFilter(0, 10000);
+		p.applyPidFilter(5000, 10000);
+
+		// Verify firstRun is now false
+		assertFalse("After cycles, firstRun should be false", p.saveState().firstRun());
+
+		// Restore fresh state
+		p.restoreState(freshSnapshot);
+
+		// Verify firstRun is true again
+		assertTrue("After restore, firstRun should be true", p.saveState().firstRun());
+
+		// When firstRun=true, applyPidFilter sets lastInput=input so D-term = 0.
+		// A second fresh filter is in the same initial state — outputs must match.
+		var fresh = new PidFilter(0.3, 0.3, 0.1);
+		fresh.setLimits(-100000, 100000);
+
+		var restoredOutput = p.applyPidFilter(3000, 10000);
+		var freshOutput = fresh.applyPidFilter(3000, 10000);
+		assertEquals("Restored firstRun filter must behave like a fresh filter",
+				freshOutput, restoredOutput);
 	}
 
 	private void t(PidFilter p, int input, int output, int expectedOutput) {
