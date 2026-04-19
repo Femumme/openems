@@ -12,7 +12,13 @@ public class PidFilter {
 	public static final double DEFAULT_I = 0.3;
 	public static final double DEFAULT_D = 0.1;
 
-	public static final int ERROR_SUM_LIMIT_FACTOR = 2;
+	/**
+	 * Safety margin applied to the dynamic integrator limit. The integrator ceiling
+	 * is computed as {@code max(|lowLimit|, |highLimit|) / I * SAFETY_MARGIN} so
+	 * that the integrator can always accumulate enough to drive the output to the
+	 * full target value at steady state.
+	 */
+	private static final double ERROR_SUM_LIMIT_SAFETY_MARGIN = 1.5;
 
 	private final double p;
 	private final double i;
@@ -174,6 +180,13 @@ public class PidFilter {
 	/**
 	 * Applies the low and high limits to the error sum.
 	 *
+	 * <p>
+	 * The limit is derived dynamically from the output limits and the integral
+	 * gain. At steady state the integrator must supply {@code target / I} to
+	 * maintain the output at the target value. The limit is set to
+	 * {@code max(|lowLimit|, |highLimit|) / I * SAFETY_MARGIN} so the integrator
+	 * is never the bottleneck preventing the PID from reaching the full target.
+	 *
 	 * @param value the input value
 	 * @return the value within low and high limit
 	 */
@@ -190,8 +203,14 @@ public class PidFilter {
 			return value;
 		}
 
-		// apply additional factor to increase limit
-		errorSumLimit *= ERROR_SUM_LIMIT_FACTOR;
+		// Scale by inverse of integral gain so the integrator can supply the full
+		// output range at steady state. Falls back to a fixed factor of 4 when the
+		// integral gain is zero or negligible to avoid division by near-zero.
+		if (this.i > 1e-6) {
+			errorSumLimit = errorSumLimit / this.i * ERROR_SUM_LIMIT_SAFETY_MARGIN;
+		} else {
+			errorSumLimit *= 4;
+		}
 
 		// apply limit
 		if (value < errorSumLimit * -1) {

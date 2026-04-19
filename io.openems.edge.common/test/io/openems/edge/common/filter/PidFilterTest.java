@@ -258,6 +258,46 @@ public class PidFilterTest {
 				freshOutput, restoredOutput);
 	}
 
+	/**
+	 * Verifies that the PID converges to the full target when target equals the
+	 * output limit. Before the dynamic integrator-limit fix, the PID would lock at
+	 * ~69% of the target (e.g. 505 kW out of 730 kW) due to integrator saturation.
+	 */
+	@Test
+	public void testConvergesToTargetAtLimit() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-730_000, 0);
+
+		// Simulate a perfect actuator: each cycle the hardware reaches the previous
+		// PID output, so input = previous output.
+		var power = 0;
+		for (var cycle = 0; cycle < 100; cycle++) {
+			power = p.applyPidFilter(power, -730_000);
+		}
+
+		// Must converge within 1% of target — the old code locked at ~505 kW (69%)
+		assertTrue("PID must converge to target, got " + power,
+				power <= -730_000 * 0.99);
+	}
+
+	/**
+	 * Verifies that the PID still provides smooth ramping (not jumping to the
+	 * target in one cycle) when limits are wide.
+	 */
+	@Test
+	public void testSmoothRampUp() {
+		var p = new PidFilter(0.3, 0.3, 0.1);
+		p.setLimits(-730_000, 0);
+
+		// First cycle from rest: output must be a fraction of the target, not the
+		// full target (PID smoothing preserved)
+		var firstOutput = p.applyPidFilter(0, -730_000);
+		assertTrue("First cycle must not jump to full target",
+				firstOutput > -730_000);
+		assertTrue("First cycle must make progress toward target",
+				firstOutput < 0);
+	}
+
 	private void t(PidFilter p, int input, int output, int expectedOutput) {
 		System.out.println(String.format("%10d  %10d  %10d", input, output, expectedOutput));
 		assertEquals(expectedOutput, p.applyPidFilter(input, output));
