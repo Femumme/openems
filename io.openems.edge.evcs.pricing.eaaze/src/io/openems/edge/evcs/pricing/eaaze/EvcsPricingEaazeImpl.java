@@ -37,6 +37,8 @@ public class EvcsPricingEaazeImpl extends AbstractEvcsPricingExporter implements
 	/** Read timeout in milliseconds (5 minutes). */
 	private static final int READ_TIMEOUT_MS = 300_000;
 
+	private static final String CURRENCY_EUR = "EUR";
+
 	private final Logger log = LoggerFactory.getLogger(EvcsPricingEaazeImpl.class);
 
 	@Reference(target = "(id=" + EvcsPricing.SINGLETON_COMPONENT_ID + ")")
@@ -202,6 +204,7 @@ public class EvcsPricingEaazeImpl extends AbstractEvcsPricingExporter implements
 				        id: "%s"
 				        input: {
 				            tenantId: "%s"
+				            currency: "%s"
 				            name: "%s"
 				            priceComponents: [
 				                {
@@ -219,6 +222,7 @@ public class EvcsPricingEaazeImpl extends AbstractEvcsPricingExporter implements
 				""", //
 				escapeGraphqlString(tariffId), //
 				escapeGraphqlString(tenantId), //
+				CURRENCY_EUR, //
 				escapeGraphqlString(tariffName), //
 				pricePerKwh, //
 				taxRate //
