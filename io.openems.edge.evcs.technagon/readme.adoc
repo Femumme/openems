@@ -1,0 +1,83 @@
+= OpenEMS Edge EVCS Technagon
+
+Implements one charge point of a Technagon charging station over Modbus TCP. Create one
+`Evcs.Technagon` component per charge point and select `CP1` or `CP2`.
+
+== Compatibility
+
+Implementation targets Technagon Modbus protocol register layout version 1.2. Minimum firmware
+versions are V73, V78 and V79 for corresponding Technagon hardware variants. Register behavior and
+firmware compatibility still require verification on each real device before production use.
+
+[cols="1,2"]
+|===
+|Protocol version
+|1.2
+
+|Minimum firmware versions
+|V73 / V78 / V79, depending on hardware variant; real-device verification required
+|===
+
+== Register layout
+
+All reads use Modbus function code 3. All writes use separate function code 6 requests; function
+code 16 is never used. Charge-point registers use base offset `0x1000` for CP1 and `0x2000` for
+CP2.
+
+[cols="1,1,1"]
+|===
+|Registers |Priority |Purpose
+
+|`0x0008..0x000C`
+|Low
+|Station serial number, maximum current, charge-point count
+
+|`CP + 0x003`
+|High
+|Raw status
+
+|`CP + 0x008..0x017`
+|High
+|Current limits, offered current, voltages, power factors, phase currents and powers, total power
+
+|`CP + 0x018..0x01B`
+|Low, optional
+|Unsigned 64-bit cumulative active production energy in Wh
+
+|`CP + 0x100`
+|Write FC6
+|Percentage setpoint, written as 100.00 percent every cycle
+
+|`CP + 0x101`
+|Write FC6
+|Absolute current target in mA
+
+|`CP + 0x102`
+|Write FC6
+|Fallback current in mA, restored every cycle
+
+|`CP + 0x103`
+|Write FC6
+|Fallback timeout in seconds, restored every cycle
+|===
+
+Voltages are supplied in decivolts and exposed in mV. Currents use mA, powers use W, and energy
+uses Wh.
+
+== Configuration and operation
+
+Configure Modbus bridge, unit ID, charge point, hardware current limits, fallback current and
+fallback timeout. Disable `readEnergyRegister` only when firmware does not expose cumulative energy;
+session energy then remains zero.
+
+WARNING: Enable Modbus control in charging-station setup only after OpenEMS is connected and writing
+setpoints. Configure safe fallback current and timeout first. Missing cyclic writes must cause station
+to enter configured safe fallback behavior.
+
+WARNING: Observe Technagon unbalanced-load limits: maximum 20 A on one phase and 10 A phase
+difference. Station may report offered current below OpenEMS target because station-side limits and
+vehicle behavior remain authoritative.
+
+Current targets derive from commanded power using detected active phases and 230 V. Unknown phase
+count defaults to three phases. Positive targets are clamped to configured minimum and maximum
+hardware currents; non-positive targets pause charging with 0 mA.

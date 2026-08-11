@@ -230,7 +230,7 @@ public class WriteHandler implements Runnable {
 
 		chargeStatus = switch (status) {
 		case CHARGING -> ChargeState.CHARGING;
-		case CHARGING_REJECTED, //
+		case CHARGING_REJECTED, CHARGING_FINISHED, //
 				ENERGY_LIMIT_REACHED, //
 				ERROR, STARTING, //
 				READY_FOR_CHARGING, //

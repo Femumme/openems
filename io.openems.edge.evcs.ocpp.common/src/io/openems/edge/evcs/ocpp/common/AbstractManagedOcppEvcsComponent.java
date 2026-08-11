@@ -282,7 +282,8 @@ public abstract class AbstractManagedOcppEvcsComponent extends AbstractManagedEv
 		switch (state) {
 		case CHARGING, READY_FOR_CHARGING //
 			-> doNothing();
-		case CHARGING_REJECTED, ENERGY_LIMIT_REACHED, ERROR, NOT_READY_FOR_CHARGING, STARTING, UNDEFINED //
+		case CHARGING_REJECTED, CHARGING_FINISHED, ENERGY_LIMIT_REACHED, ERROR, NOT_READY_FOR_CHARGING, STARTING,
+				UNDEFINED //
 			-> this._setActivePower(0);
 		}
 	}

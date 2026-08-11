@@ -242,6 +242,7 @@ public class EvcsAlpitronicHyperchargerImpl extends AbstractOpenemsModbusCompone
 											return;
 										case CHARGING:
 										case CHARGING_REJECTED:
+										case CHARGING_FINISHED:
 										case ENERGY_LIMIT_REACHED:
 										case ERROR:
 										case READY_FOR_CHARGING:
