@@ -12,7 +12,15 @@ public non-sealed class PidFilter extends Filter {
 	public static final double DEFAULT_I = 0.3;
 	public static final double DEFAULT_D = 0.1;
 
+	/**
+	 * Legacy error-sum limit factor.
+	 *
+	 * @deprecated The error-sum limit is now derived from the integral gain.
+	 */
+	@Deprecated
 	public static final int ERROR_SUM_LIMIT_FACTOR = 2;
+
+	private static final double ERROR_SUM_LIMIT_SAFETY_MARGIN = 1.5;
 
 	private final double p;
 	private final double i;
@@ -102,6 +110,11 @@ public non-sealed class PidFilter extends Filter {
 	/**
 	 * Applies the low and high limits to the error sum.
 	 *
+	 * <p>
+	 * The integrator needs an error sum of {@code target / i} to provide the full
+	 * target at steady state. The safety margin prevents the integrator limit from
+	 * becoming the reason why the output cannot reach the configured power limit.
+	 *
 	 * @param value the input value
 	 * @return the value within low and high limit
 	 */
@@ -118,8 +131,11 @@ public non-sealed class PidFilter extends Filter {
 			return value;
 		}
 
-		// apply additional factor to increase limit
-		errorSumLimit *= ERROR_SUM_LIMIT_FACTOR;
+		if (this.i > 1e-6) {
+			errorSumLimit = errorSumLimit / this.i * ERROR_SUM_LIMIT_SAFETY_MARGIN;
+		} else {
+			errorSumLimit *= 4;
+		}
 
 		// apply limit
 		if (value < errorSumLimit * -1) {

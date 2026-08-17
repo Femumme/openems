@@ -1,6 +1,7 @@
 package io.openems.edge.common.filter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,16 +81,16 @@ public class PidFilterTest {
 		this.t(p, 0, 10000, 3000);
 		this.t(p, 0, 10000, 6000);
 		this.t(p, 1896, 10000, 8431);
-		this.t(p, 4490, 10000, 7653);
-		this.t(p, 6981, 10000, 6906);
-		this.t(p, 8889, 10000, 6333);
-		this.t(p, 9591, 10000, 6123);
-		this.t(p, 9850, 10000, 6045);
-		this.t(p, 9945, 10000, 6017);
-		this.t(p, 9980, 10000, 6006);
-		this.t(p, 9993, 10000, 6002);
-		this.t(p, 9997, 10000, 6001);
-		this.t(p, 9999, 10000, 6000);
+		this.t(p, 4490, 10000, 10000);
+		this.t(p, 6981, 10000, 10000);
+		this.t(p, 8889, 10000, 10000);
+		this.t(p, 9591, 10000, 10000);
+		this.t(p, 9850, 10000, 10000);
+		this.t(p, 9945, 10000, 10000);
+		this.t(p, 9980, 10000, 10000);
+		this.t(p, 9993, 10000, 10000);
+		this.t(p, 9997, 10000, 10000);
+		this.t(p, 9999, 10000, 10000);
 		this.t(p, 10000, 10000, 10000);
 		this.t(p, 10000, 10000, 10000);
 		this.t(p, 10000, 10000, 10000);
@@ -149,6 +150,25 @@ public class PidFilterTest {
 
 		// Cycle 10
 		this.t(p, 1000, 5000, 3600);
+	}
+
+	@Test
+	public void testDefaultPidRampsAndConvergesToFullTargetAtLimit() {
+		var pidFilter = new PidFilter();
+		pidFilter.setLimits(-730_000, 0);
+
+		var power = pidFilter.applyPidFilter(0, -730_000);
+		assertEquals(-219_000, power);
+		assertTrue(power > -730_000 && power < 0, "PID must ramp towards the target on its first cycle");
+
+		power = pidFilter.applyPidFilter(power, -730_000);
+		assertEquals(-350_400, power);
+
+		for (var cycle = 2; cycle < 100; cycle++) {
+			power = pidFilter.applyPidFilter(power, -730_000);
+		}
+
+		assertEquals(-730_000, power, "PID must converge to the full target");
 	}
 
 	private void t(PidFilter p, int input, int output, int expectedOutput) {
