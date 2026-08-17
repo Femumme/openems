@@ -1,6 +1,6 @@
 package io.openems.edge.fronius.meter;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import io.openems.common.channel.Level;
 import io.openems.common.exceptions.OpenemsException;
@@ -10,14 +10,12 @@ import io.openems.edge.bridge.modbus.test.DummyModbusBridge;
 import io.openems.edge.common.component.OpenemsComponent;
 import io.openems.edge.common.test.AbstractComponentTest.TestCase;
 import io.openems.edge.common.test.ComponentTest;
-import io.openems.edge.common.test.DummyConfigurationAdmin;
 import io.openems.edge.meter.api.ElectricityMeter;
 
 public class MeterFroniusImplTest {
 
 	private static ComponentTest prepareTest(boolean invert) throws OpenemsException, Exception {
 		return new ComponentTest(new MeterFroniusImpl()) //
-				.addReference("cm", new DummyConfigurationAdmin()) //
 				.addReference("setModbus", new DummyModbusBridge("modbus0") //
 						.withRegisters(40000, 0x5375, 0x6e53) // isSunSpec
 						.withRegisters(40002, 1, 66) // Block 1

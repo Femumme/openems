@@ -1,6 +1,7 @@
 // @ts-strict-ignore
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
 import { AbstractFlatWidget } from "src/app/shared/components/flat/abstract-flat-widget";
+import { Modal } from "src/app/shared/components/flat/flat";
 import { Icon } from "src/app/shared/type/widget";
 
 import { ChannelAddress, CurrentData } from "../../../../shared/shared";
@@ -9,10 +10,10 @@ import { Controller_ChpSocModalComponent } from "./modal/modal.component";
 @Component({
     selector: "Controller_ChpSocComponent",
     templateUrl: "./ChpSoc.html",
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false,
 })
 export class Controller_ChpSocComponent extends AbstractFlatWidget {
-
     private static PROPERTY_MODE: string = "_PropertyMode";
     public inputChannel: ChannelAddress | null = null;
     public outputChannel: ChannelAddress | null = null;
@@ -28,6 +29,8 @@ export class Controller_ChpSocComponent extends AbstractFlatWidget {
         size: "large",
         color: "primary",
     };
+
+    protected modalComponent: Modal | null = null;
 
     protected get thresholdDelta() {
         const delta = this.highThresholdValue - this.lowThresholdValue;
@@ -47,11 +50,25 @@ export class Controller_ChpSocComponent extends AbstractFlatWidget {
         return await modal.present();
     }
 
+    protected override afterIsInitialized(): void {
+        this.modalComponent = this.getModalComponent();
+    }
+
+    protected getModalComponent(): Modal {
+        return {
+            component: Controller_ChpSocModalComponent,
+            componentProps: {
+                component: this.component,
+                edge: this.edge,
+                outputChannel: this.outputChannel,
+                inputChannel: this.inputChannel,
+            },
+        };
+    }
+
     protected override getChannelAddresses() {
-        this.outputChannel = ChannelAddress.fromString(
-            this.component.properties["outputChannelAddress"]);
-        this.inputChannel = ChannelAddress.fromString(
-            this.component.properties["inputChannelAddress"]);
+        this.outputChannel = ChannelAddress.fromString(this.component.properties["outputChannelAddress"]);
+        this.inputChannel = ChannelAddress.fromString(this.component.properties["inputChannelAddress"]);
         this.propertyModeChannel = new ChannelAddress(this.component.id, Controller_ChpSocComponent.PROPERTY_MODE);
         return [
             this.outputChannel,
@@ -63,29 +80,28 @@ export class Controller_ChpSocComponent extends AbstractFlatWidget {
     }
 
     protected override onCurrentData(currentData: CurrentData) {
-
         // Mode
         this.modeChannelValue = currentData.allComponents[this.propertyModeChannel.toString()];
         switch (this.modeChannelValue) {
             case "ON":
-                this.mode = this.translate.instant("General.on");
+                this.mode = this.translate.instant("GENERAL.ON");
                 break;
             case "OFF":
-                this.mode = this.translate.instant("General.off");
+                this.mode = this.translate.instant("GENERAL.OFF");
                 break;
             case "AUTOMATIC":
-                this.mode = this.translate.instant("General.automatic");
+                this.mode = this.translate.instant("GENERAL.AUTOMATIC");
         }
 
         const outputChannelValue = currentData.allComponents[this.outputChannel.toString()];
 
         switch (outputChannelValue) {
             case 0:
-                this.state = this.translate.instant("General.inactive");
+                this.state = this.translate.instant("GENERAL.INACTIVE");
                 this.icon.name == "help-outline";
                 break;
             case 1:
-                this.state = this.translate.instant("General.active");
+                this.state = this.translate.instant("GENERAL.ACTIVE");
                 break;
         }
 
@@ -93,5 +109,4 @@ export class Controller_ChpSocComponent extends AbstractFlatWidget {
         this.highThresholdValue = currentData.allComponents[this.component.id + "/_PropertyHighThreshold"];
         this.lowThresholdValue = currentData.allComponents[this.component.id + "/_PropertyLowThreshold"];
     }
-
 }

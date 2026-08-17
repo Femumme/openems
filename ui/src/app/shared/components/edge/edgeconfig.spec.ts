@@ -1,4 +1,5 @@
 // @ts-strict-ignore
+import { Type } from "@angular/core";
 import { TimeUnit } from "chart.js";
 import { SumState } from "src/app/index/shared/sumState";
 import { ChartConstants } from "src/app/shared/components/chart/chart.constants";
@@ -6,22 +7,23 @@ import { ChartConstants } from "src/app/shared/components/chart/chart.constants"
 import { Role } from "../../type/role";
 import { ButtonLabel } from "../modal/modal-button/modal-button";
 import { ModalLineComponent, TextIndentation } from "../modal/modal-line/modal-line";
+import { OeImageComponent } from "../oe-img/oe-img";
 import { OeChartTester, OeFormlyViewTester } from "../shared/testing/tester";
 import { Edge } from "./edge";
 import { EdgeConfig, PersistencePriority } from "./edgeconfig";
 
 export namespace DummyConfig {
-
     export function dummyEdge(values: {
-        edgeId?: string,
-        comment?: string,
-        producttype?: string,
-        version?: string,
-        role?: Role,
-        isOnline?: boolean,
-        lastmessage?: Date,
-        sumState?: SumState,
-        firstSetupProtocol?: Date,
+        edgeId?: string;
+        comment?: string;
+        producttype?: string;
+        version?: string;
+        role?: Role;
+        isOnline?: boolean;
+        lastmessage?: Date;
+        sumState?: SumState;
+        firstSetupProtocol?: Date;
+        settings?: Edge["settings"];
     }): Edge {
         return new Edge(
             values.edgeId ?? "edge0",
@@ -33,16 +35,27 @@ export namespace DummyConfig {
             values.lastmessage ?? new Date(),
             values.sumState ?? SumState.OK,
             values.firstSetupProtocol ?? new Date(0),
+            values.settings ?? null,
         );
     }
 
-    const DUMMY_EDGE: Edge = new Edge("edge0", "", "", "2023.3.5", Role.ADMIN, true, new Date(), SumState.OK, new Date(0));
+    const DUMMY_EDGE: Edge = new Edge(
+        "edge0",
+        "",
+        "",
+        "2023.3.5",
+        Role.ADMIN,
+        true,
+        new Date(),
+        SumState.OK,
+        new Date(0),
+        null,
+    );
     export function from(...components: Component[]): EdgeConfig {
-
         return new EdgeConfig(DUMMY_EDGE, <EdgeConfig>{
             components: <unknown>components?.reduce((acc, c) => {
                 c.factoryId = c.factory.id;
-                return ({ ...acc, [c.id]: c });
+                return { ...acc, [c.id]: c };
             }, {}),
             factories: components?.reduce((p, c) => {
                 p[c.factory.id] = new EdgeConfig.Factory(c.factory.id, "", c.factory.natureIds);
@@ -55,7 +68,7 @@ export namespace DummyConfig {
         const components = Object.values(edgeConfig?.components) ?? null;
 
         const factories = {};
-        components.forEach(obj => {
+        components.forEach((obj) => {
             if (factories[obj.factoryId]) {
                 factories[obj.factoryId].componentIds = [...factories[obj.factoryId].componentIds, obj.id];
             } else {
@@ -77,7 +90,6 @@ export namespace DummyConfig {
     }
 
     export namespace Factory {
-
         export const SUM = {
             id: "Core.Sum",
             natureIds: [
@@ -160,6 +172,17 @@ export namespace DummyConfig {
                 "io.openems.edge.timedata.api.TimedataProvider",
             ],
         };
+        export const EDGE_2_EDGE_WEBSOCKET_ESS = {
+            id: "Edge2Edge.Websocket.Ess",
+            natureIds: [
+                "io.openems.edge.edge2edge.websocket.Edge2EdgeWebsocket",
+                "io.openems.edge.ess.api.SymmetricEss",
+                "io.openems.edge.common.component.OpenemsComponent",
+                "io.openems.edge.ess.api.ManagedSymmetricEss",
+                "io.openems.edge.ess.api.AsymmetricEss",
+                "io.openems.edge.edge2edge.websocket.ess.Edge2EdgeEss",
+            ],
+        };
 
         export const ESS_LIMITER_14A = {
             id: "Controller.Ess.Limiter14a",
@@ -167,7 +190,17 @@ export namespace DummyConfig {
                 "io.openems.edge.controller.ess.limiter14a",
                 "io.openems.edge.common.component.OpenemsComponent",
                 "io.openems.edge.timedata.api.TimedataProvider",
+            ],
+        };
 
+        export const ESS_RCR = {
+            id: "Controller.Ess.RippleControlReceiver",
+            natureIds: [
+                "io.openems.edge.common.meta.Meta",
+                "io.openems.edge.controller.api.Controller",
+                "io.openems.edge.controller.ess.ripplecontrolreceiver",
+                "io.openems.edge.common.component.OpenemsComponent",
+                "io.openems.edge.timedata.api.TimedataProvider",
             ],
         };
 
@@ -282,7 +315,6 @@ export namespace DummyConfig {
     }
 
     export namespace Component {
-
         export const SUM = (id: string, alias?: string): Component => ({
             id: id,
             alias: alias ?? id,
@@ -334,6 +366,7 @@ export namespace DummyConfig {
             factory: Factory.METER_SOCOMEC_THREEPHASE,
             factoryId: Factory.METER_SOCOMEC_THREEPHASE.id,
             properties: {
+                enabled: "true",
                 invert: false,
                 modbusUnitId: 5,
                 type: "CONSUMPTION_METERED",
@@ -357,10 +390,10 @@ export namespace DummyConfig {
             alias: alias,
             factory: Factory.CHARGER_GOODWE_MPPT_TWO_STRING,
             properties: {
-                "alias": "MPPT 1",
-                "enabled": true,
+                alias: "MPPT 1",
+                enabled: true,
                 "essOrBatteryInverter.id": "batteryInverter0",
-                "mpptPort": "MPPT_1",
+                mpptPort: "MPPT_1",
             },
             channels: {},
         });
@@ -390,10 +423,33 @@ export namespace DummyConfig {
             channels: {},
         });
 
+        export const EDGE_2_EDGE_WEBSOCKET_ESS = (id: string, alias?: string): Component => ({
+            id: id,
+            alias: alias ?? id,
+            factoryId: Factory.EDGE_2_EDGE_WEBSOCKET_ESS.id,
+            factory: Factory.EDGE_2_EDGE_WEBSOCKET_ESS,
+            properties: {
+                invert: false,
+                modbusUnitId: 5,
+            },
+            channels: {},
+        });
+
         export const ESS_LIMITER_14A = (id: string, alias?: string): Component => ({
             id: id,
             alias: alias ?? id,
             factory: Factory.ESS_LIMITER_14A,
+            properties: {
+                enabled: "true",
+                ["ess.id"]: "ess0",
+            },
+            channels: {},
+        });
+
+        export const ESS_RCR = (id: string, alias?: string): Component => ({
+            id: id,
+            alias: alias ?? id,
+            factory: Factory.ESS_RCR,
             properties: {
                 enabled: "true",
                 ["ess.id"]: "ess0",
@@ -456,27 +512,33 @@ export namespace DummyConfig {
                 invert: false,
                 modbusUnitId: 5,
                 type: "PRODUCTION",
-                writeChannels: [
-                    "Ess0SetActivePowerEquals",
-                ],
+                writeChannels: ["Ess0SetActivePowerEquals"],
             },
             channels: {},
         });
 
-
-        export const CONTROLLER_ESS_EMERGENCY_CAPACITY_RESERVE = ({ id = "ctrlEmergencyCapacityReserve0", essId = "ess0", isReserveSocEnabled = true, alias = id }: { id?: string, essId?: string, isReserveSocEnabled?: boolean, alias?: string }): Component => ({
+        export const CONTROLLER_ESS_EMERGENCY_CAPACITY_RESERVE = ({
+            id = "ctrlEmergencyCapacityReserve0",
+            essId = "ess0",
+            isReserveSocEnabled = true,
+            alias = id,
+        }: {
+            id?: string;
+            essId?: string;
+            isReserveSocEnabled?: boolean;
+            alias?: string;
+        }): Component => ({
             id: id,
             alias: alias ?? id,
             factoryId: "Controller.Ess.EmergencyCapacityReserve",
             factory: Factory.CONTROLLER_ESS_EMERGENCY_CAPACITY_RESERVE,
             isEnabled: true,
             properties: {
-                "modbusUnitId": 5,
+                modbusUnitId: 5,
                 "ess.id": essId,
-                "isReserveSocEnabled": isReserveSocEnabled,
+                isReserveSocEnabled: isReserveSocEnabled,
             },
             channels: {},
-
         });
 
         export const HEAT_PUMP_SG_READY = (id: string, alias?: string): Component => ({
@@ -486,6 +548,7 @@ export namespace DummyConfig {
             properties: {
                 enabled: true,
                 mode: "AUTOMATIC",
+                "meter.id": "meter3",
             },
             channels: {},
         });
@@ -497,35 +560,32 @@ export namespace DummyConfig {
             properties: {
                 enabled: true,
                 isOn: true,
+                outputChannelAddress: "io0/Relay3",
             },
             channels: {},
         });
     }
 }
 
-/**
- * Factories.
- */
+/** Factories. */
 // identifier `Factory` is also used in namespace
 
 type Factory = {
-    id: string,
-    natureIds: string[],
+    id: string;
+    natureIds: string[];
 };
 
-/**
- * Components
- */
+/** Components */
 // identifier `Component` is also used in namespace
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type Component = {
-    id: string,
-    alias: string, // defaults to id
-    factory: Factory,
-    factoryId?: string // generated
-    properties: { [property: string]: any },
-    channels?: {},
-    isEnabled?: boolean
+    id: string;
+    alias: string; // defaults to id
+    factory: Factory;
+    factoryId?: string; // generated
+    properties: { [property: string]: any };
+    channels?: {};
+    isEnabled?: boolean;
 };
 
 export const CHANNEL_LINE = (name: string, value: string, indentation?: TextIndentation): OeFormlyViewTester.Field => ({
@@ -535,14 +595,29 @@ export const CHANNEL_LINE = (name: string, value: string, indentation?: TextInde
     value: value,
 });
 
-export const VALUE_FROM_CHANNELS_LINE = (name: string, value: string, indentation?: TextIndentation): OeFormlyViewTester.Field => ({
+export const CHART_LINE = <T>(component: Type<T>, inputs?: Record<string, unknown>): OeFormlyViewTester.Field => ({
+    type: "component-line",
+    component: component.name,
+    ...(inputs && { inputs }),
+});
+
+export const VALUE_FROM_CHANNELS_LINE = (
+    name: string,
+    value: string,
+    indentation?: TextIndentation,
+): OeFormlyViewTester.Field => ({
     type: "value-from-channels-line",
     name: name,
     ...(indentation && { indentation: indentation }),
     value: value,
 });
 
-export const PHASE_ADMIN = (name: string, voltage: string, current: string, power: string): OeFormlyViewTester.Field => ({
+export const PHASE_ADMIN = (
+    name: string,
+    voltage: string,
+    current: string,
+    power: string,
+): OeFormlyViewTester.Field => ({
     type: "children-line",
     name: name,
     indentation: TextIndentation.SINGLE,
@@ -583,343 +658,393 @@ export const LINE_INFO_PHASES_DE: OeFormlyViewTester.Field = {
     name: "Die Summe der einzelnen Phasen kann aus technischen Gründen geringfügig von der Gesamtsumme abweichen.",
 };
 
-export const LINE_INFO = (text: string): OeFormlyViewTester.Field => ({
+export const LINE_INFO = (text: string, style: string = ""): OeFormlyViewTester.Field => ({
     type: "info-line",
     name: text,
 });
-export const LINE_BUTTONS_FROM_FORM_CONTROL = (text: string, controlName: string, buttons: ButtonLabel[]): OeFormlyViewTester.Field => ({
+export const LINE_BUTTONS_FROM_FORM_CONTROL = (
+    text: string,
+    controlName: string,
+    buttons: ButtonLabel[],
+): OeFormlyViewTester.Field => ({
     type: "buttons-from-form-control-line",
     name: text,
     buttons: buttons,
     controlName: controlName,
 });
-export const RANGE_BUTTONS_FROM_FORM_CONTROL_LINE = <T>(controlName: string, expectedValue: T, properties: Partial<Extract<ModalLineComponent["control"], { type: "RANGE" }>["properties"]>,): OeFormlyViewTester.Field => ({
+export const RANGE_BUTTONS_FROM_FORM_CONTROL_LINE = <T>(
+    controlName: string,
+    expectedValue: T,
+    properties: Partial<Extract<ModalLineComponent["control"], { type: "RANGE" }>["properties"]>,
+): OeFormlyViewTester.Field => ({
     type: "range-button-from-form-control-line",
     controlName,
     expectedValue,
     properties,
 });
+export const LINE_RADIO_BUTTONS_FROM_FORM_CONTROL = (
+    text: string,
+    controlName: string,
+    buttons: ButtonLabel[],
+): OeFormlyViewTester.Field => ({
+    type: "radio-buttons-from-form-control-line",
+    name: text,
+    buttons: buttons,
+    controlName: controlName,
+});
+export const SVG_LINE = (img: OeImageComponent["img"]): OeFormlyViewTester.Field => ({
+    type: "image-line",
+    img: img,
+});
+export const LINE_INPUT_FROM_FORM_CONTROL = (
+    text: string,
+    controlName: string,
+    unit: string = "W",
+    expectedValue: number | string | null = null,
+): OeFormlyViewTester.Field => ({
+    type: "input-line",
+    name: text,
+    controlName,
+    properties: { unit },
+    expectedValue,
+});
 
 export namespace ChartConfig {
-
-
-    export const BAR_CHART_OPTIONS = (period: string, chartType: "line" | "bar", options: { [key: string]: { scale: { min: number, max: number }, ticks: { stepSize: number } } }, title?: string): OeChartTester.Dataset.Option => ({
-        type: "option", options: {
-            "responsive": true,
-            "maintainAspectRatio": false,
-            "elements": {
-                "point": {
-                    "radius": 0,
-                    "hitRadius": 0,
-                    "hoverRadius": 0,
+    export const BAR_CHART_OPTIONS = (
+        period: string,
+        chartType: "line" | "bar",
+        options: {
+            [key: string]: {
+                scale: { min: number; max: number };
+                ticks: { stepSize: number };
+            };
+        },
+        title?: string,
+    ): OeChartTester.Dataset.Option => ({
+        type: "option",
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: {
+                point: {
+                    radius: 0,
+                    hitRadius: 0,
+                    hoverRadius: 0,
                 },
-                "line": {
-                    "stepped": false,
-                    "fill": true,
-                },
-            },
-            "datasets": {
-                "bar": {
-                    "barPercentage": 1,
-                },
-                "line": {
-                },
-            },
-            "plugins": {
-                "colors": {
-                    "enabled": false,
-                },
-                "legend": {
-                    "display": true,
-                    "position": "bottom",
-                    "labels": {
-                        "color": "",
-                    },
-                },
-                "tooltip": {
-                    "intersect": false,
-                    "mode": "x",
-                    "callbacks": {
-                    },
+                line: {
+                    stepped: false,
+                    fill: true,
                 },
             },
-            "scales": {
-                "x": {
-                    "stacked": true,
-                    "offset": true,
-                    "type": "time",
-                    "ticks": {
-                        "source": "auto",
-                        "maxTicksLimit": 31,
+            datasets: {
+                bar: {
+                    barPercentage: 1,
+                },
+                line: {},
+            },
+            plugins: {
+                colors: {
+                    enabled: false,
+                },
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: {
+                        color: "",
                     },
-                    "bounds": "ticks",
-                    "adapters": {
-                        "date": {
-                            "locale": {
-                                "code": "de",
-                                "formatLong": {
-                                },
-                                "localize": {
-                                },
-                                "match": {
-                                },
-                                "options": {
-                                    "weekStartsOn": 1,
-                                    "firstWeekContainsDate": 4,
+                },
+                tooltip: {
+                    intersect: false,
+                    mode: "x",
+                    callbacks: {},
+                },
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    offset: true,
+                    type: "time",
+                    ticks: {
+                        source: "auto",
+                        maxTicksLimit: 31,
+                    },
+                    bounds: "ticks",
+                    adapters: {
+                        date: {
+                            locale: {
+                                code: "de",
+                                formatLong: {},
+                                localize: {},
+                                match: {},
+                                options: {
+                                    weekStartsOn: 1,
+                                    firstWeekContainsDate: 4,
                                 },
                             },
                         },
                     },
-                    "time": {
-                        "unit": period as TimeUnit,
-                        "displayFormats": {
-                            "datetime": "yyyy-MM-dd HH:mm:ss",
-                            "millisecond": "SSS [ms]",
-                            "second": "HH:mm:ss a",
-                            "minute": "HH:mm",
-                            "hour": "HH:00",
-                            "day": "dd",
-                            "week": "ll",
-                            "month": "MM",
-                            "quarter": "[Q]Q - YYYY",
-                            "year": "yyyy",
+                    time: {
+                        unit: period as TimeUnit,
+                        displayFormats: {
+                            datetime: "yyyy-MM-dd HH:mm:ss",
+                            millisecond: "SSS [ms]",
+                            second: "HH:mm:ss a",
+                            minute: "HH:mm",
+                            hour: "HH:00",
+                            day: "dd",
+                            week: "ll",
+                            month: "MM",
+                            quarter: "[Q]Q - YYYY",
+                            year: "yyyy",
                         },
                     },
                 },
-                "left": {
-                    ...options["left"]?.scale, ...(chartType === "line" ? { stacked: false } : {}),
-                    "title": {
-                        "text": "kWh",
-                        "display": false,
-                        "padding": 5,
-                        "font": { "size": 11 },
+                left: {
+                    ...options["left"]?.scale,
+                    ...(chartType === "line" ? { stacked: false } : {}),
+                    title: {
+                        text: "kWh",
+                        display: false,
+                        padding: 5,
+                        font: { size: 11 },
                     },
-                    "beginAtZero": true,
-                    "position": "left",
-                    "grid": { "display": true },
-                    "ticks": {
+                    beginAtZero: true,
+                    position: "left",
+                    grid: { display: true },
+                    ticks: {
                         ...options["left"]?.ticks,
-                        "color": "",
-                        "padding": 5,
-                        "maxTicksLimit": ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
+                        color: "",
+                        padding: 5,
+                        maxTicksLimit: ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
                     },
                 },
             },
         },
     });
-    export const LINE_CHART_OPTIONS = (period: string, chartType: "line" | "bar", options: { [key: string]: { scale: { min: number, max: number }, ticks: { stepSize: number } } }, title?: string): OeChartTester.Dataset.Option => ({
+    export const LINE_CHART_OPTIONS = (
+        period: string,
+        chartType: "line" | "bar",
+        options: {
+            [key: string]: {
+                scale: { min: number; max: number };
+                ticks: { stepSize: number };
+            };
+        },
+        title?: string,
+    ): OeChartTester.Dataset.Option => ({
         type: "option",
         options: {
-            "responsive": true,
-            "maintainAspectRatio": false,
-            "elements": {
-                "point": {
-                    "radius": 0,
-                    "hitRadius": 0,
-                    "hoverRadius": 0,
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: {
+                point: {
+                    radius: 0,
+                    hitRadius: 0,
+                    hoverRadius: 0,
                 },
-                "line": {
-                    "stepped": false,
-                    "fill": true,
-                },
-            },
-            "datasets": {
-                "bar": {
-                },
-                "line": {
+                line: {
+                    stepped: false,
+                    fill: true,
                 },
             },
-            "plugins": {
-                "colors": {
-                    "enabled": false,
+            datasets: {
+                bar: {},
+                line: {},
+            },
+            plugins: {
+                colors: {
+                    enabled: false,
                 },
-                "legend": {
-                    "display": true,
-                    "position": "bottom",
-                    "labels": {
-                        "color": "",
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: {
+                        color: "",
                     },
                 },
-                "tooltip": {
-                    "intersect": false,
-                    "mode": "index",
-                    "callbacks": {
-                    },
+                tooltip: {
+                    intersect: false,
+                    mode: "index",
+                    callbacks: {},
                 },
             },
-            "scales": {
-                "x": {
-                    "stacked": true,
-                    "offset": false,
-                    "type": "time",
-                    "ticks": {
-                        "source": "auto",
-                        "maxTicksLimit": 31,
+            scales: {
+                x: {
+                    stacked: true,
+                    offset: false,
+                    type: "time",
+                    ticks: {
+                        source: "auto",
+                        maxTicksLimit: 31,
                     },
-                    "bounds": "ticks",
-                    "adapters": {
-                        "date": {
-                            "locale": {
-                                "code": "de",
-                                "formatLong": {
-                                },
-                                "localize": {
-                                },
-                                "match": {
-                                },
-                                "options": {
-                                    "weekStartsOn": 1,
-                                    "firstWeekContainsDate": 4,
+                    bounds: "ticks",
+                    adapters: {
+                        date: {
+                            locale: {
+                                code: "de",
+                                formatLong: {},
+                                localize: {},
+                                match: {},
+                                options: {
+                                    weekStartsOn: 1,
+                                    firstWeekContainsDate: 4,
                                 },
                             },
                         },
                     },
-                    "time": {
-                        "unit": period as TimeUnit,
-                        "displayFormats": {
-                            "datetime": "yyyy-MM-dd HH:mm:ss",
-                            "millisecond": "SSS [ms]",
-                            "second": "HH:mm:ss a",
-                            "minute": "HH:mm",
-                            "hour": "HH:00",
-                            "day": "dd",
-                            "week": "ll",
-                            "month": "MM",
-                            "quarter": "[Q]Q - YYYY",
-                            "year": "yyyy",
+                    time: {
+                        unit: period as TimeUnit,
+                        displayFormats: {
+                            datetime: "yyyy-MM-dd HH:mm:ss",
+                            millisecond: "SSS [ms]",
+                            second: "HH:mm:ss a",
+                            minute: "HH:mm",
+                            hour: "HH:00",
+                            day: "dd",
+                            week: "ll",
+                            month: "MM",
+                            quarter: "[Q]Q - YYYY",
+                            year: "yyyy",
                         },
                     },
                 },
-                "left": {
-                    ...options["left"]?.scale, ...(chartType === "line" ? { stacked: false } : {}),
-                    "title": {
-                        "text": "kW",
-                        "display": false,
-                        "padding": 5,
-                        "font": { "size": 11 },
+                left: {
+                    ...options["left"]?.scale,
+                    ...(chartType === "line" ? { stacked: false } : {}),
+                    title: {
+                        text: "kW",
+                        display: false,
+                        padding: 5,
+                        font: { size: 11 },
                     },
-                    "beginAtZero": true,
-                    "position": "left",
-                    "grid": { "display": true },
-                    "ticks": {
+                    beginAtZero: true,
+                    position: "left",
+                    grid: { display: true },
+                    ticks: {
                         ...options["left"]?.ticks,
-                        "color": "",
-                        "padding": 5,
-                        "maxTicksLimit": ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
+                        color: "",
+                        padding: 5,
+                        maxTicksLimit: ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
                     },
                 },
             },
         },
     });
-    export const LINE_CHART_OPTIONS_TYPE_PERCENTAGE = (period: string, chartType: "line" | "bar", options: { [key: string]: { scale: { min: number, max: number }, ticks: { stepSize: number } } }, title?: string): OeChartTester.Dataset.Option => ({
+    export const LINE_CHART_OPTIONS_TYPE_PERCENTAGE = (
+        period: string,
+        chartType: "line" | "bar",
+        options: {
+            [key: string]: {
+                scale: { min: number; max: number };
+                ticks: { stepSize: number };
+            };
+        },
+        title?: string,
+    ): OeChartTester.Dataset.Option => ({
         type: "option",
         options: {
-            "responsive": true,
-            "maintainAspectRatio": false,
-            "interaction": {
-                "mode": "index",
-                "intersect": false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false,
             },
-            "elements": {
-                "point": {
-                    "radius": 0,
-                    "hitRadius": 0,
-                    "hoverRadius": 0,
+            elements: {
+                point: {
+                    radius: 0,
+                    hitRadius: 0,
+                    hoverRadius: 0,
                 },
-                "line": {
-                    "stepped": false,
-                    "fill": true,
-                },
-            },
-            "datasets": {
-                "bar": {
-                },
-                "line": {
+                line: {
+                    stepped: false,
+                    fill: true,
                 },
             },
-            "plugins": {
-                "colors": {
-                    "enabled": false,
+            datasets: {
+                bar: {},
+                line: {},
+            },
+            plugins: {
+                colors: {
+                    enabled: false,
                 },
-                "legend": {
-                    "display": true,
-                    "position": "bottom",
-                    "labels": {
-                        "color": "",
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: {
+                        color: "",
                     },
                 },
-                "tooltip": {
-                    "enabled": true,
-                    "intersect": false,
-                    "mode": "index",
-                    "callbacks": {
-                    },
+                tooltip: {
+                    enabled: true,
+                    intersect: false,
+                    mode: "index",
+                    callbacks: {},
                 },
-                "annotation": { "annotations": {} }, "datalabels": {
+                annotation: { annotations: {} },
+                datalabels: {
                     display: false,
                 },
             },
-            "scales": {
-                "x": {
-                    "stacked": true,
-                    "offset": false,
-                    "type": "time",
-                    "ticks": {
-                        "source": "auto",
-                        "maxTicksLimit": 31,
+            scales: {
+                x: {
+                    stacked: true,
+                    offset: false,
+                    type: "time",
+                    ticks: {
+                        source: "auto",
+                        maxTicksLimit: 31,
                     },
-                    "bounds": "ticks",
-                    "adapters": {
-                        "date": {
-                            "locale": {
-                                "code": "de",
-                                "formatLong": {
-                                },
-                                "localize": {
-                                },
-                                "match": {
-                                },
-                                "options": {
-                                    "weekStartsOn": 1,
-                                    "firstWeekContainsDate": 4,
+                    bounds: "ticks",
+                    adapters: {
+                        date: {
+                            locale: {
+                                code: "de",
+                                formatLong: {},
+                                localize: {},
+                                match: {},
+                                options: {
+                                    weekStartsOn: 1,
+                                    firstWeekContainsDate: 4,
                                 },
                             },
                         },
                     },
-                    "time": {
-                        "unit": period as TimeUnit,
-                        "displayFormats": {
-                            "datetime": "yyyy-MM-dd HH:mm:ss",
-                            "millisecond": "SSS [ms]",
-                            "second": "HH:mm:ss a",
-                            "minute": "HH:mm",
-                            "hour": "HH:00",
-                            "day": "dd",
-                            "week": "ll",
-                            "month": "MM",
-                            "quarter": "[Q]Q - YYYY",
-                            "year": "yyyy",
+                    time: {
+                        unit: period as TimeUnit,
+                        displayFormats: {
+                            datetime: "yyyy-MM-dd HH:mm:ss",
+                            millisecond: "SSS [ms]",
+                            second: "HH:mm:ss a",
+                            minute: "HH:mm",
+                            hour: "HH:00",
+                            day: "dd",
+                            week: "ll",
+                            month: "MM",
+                            quarter: "[Q]Q - YYYY",
+                            year: "yyyy",
                         },
                     },
                 },
-                "left": {
-                    ...options["left"]?.scale, ...(chartType === "line" ? { stacked: false } : {}),
-                    "title": {
-                        "text": "%",
-                        "display": false,
-                        "padding": 5,
-                        "font": { "size": 11 },
+                left: {
+                    ...options["left"]?.scale,
+                    ...(chartType === "line" ? { stacked: false } : {}),
+                    title: {
+                        text: "%",
+                        display: false,
+                        padding: 5,
+                        font: { size: 11 },
                     },
-                    "position": "left",
-                    "grid": { "display": true },
-                    "ticks": {
+                    position: "left",
+                    grid: { display: true },
+                    ticks: {
                         ...options["left"]?.ticks,
-                        "color": "",
-                        "padding": 5,
-                        "maxTicksLimit": ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
+                        color: "",
+                        padding: 5,
+                        maxTicksLimit: ChartConstants.NUMBER_OF_Y_AXIS_TICKS,
                     },
-                    "beginAtZero": true,
-                    "type": "linear",
+                    beginAtZero: true,
+                    type: "linear",
                 },
             },
         },
@@ -938,11 +1063,10 @@ describe("PersistencePriority", () => {
 });
 
 describe("hasPropertyValue", () => {
-
-    const component = new EdgeConfig.Component("component0", "", true, "factoryId", {
-        "booleanValue": true,
-        "booleanValueString": "true",
-        "numberValueStrng": "42",
+    const component = new EdgeConfig.Component("component0", "", true, false, "factoryId", {
+        booleanValue: true,
+        booleanValueString: "true",
+        numberValueStrng: "42",
     });
 
     it("#booleanValue", () => {

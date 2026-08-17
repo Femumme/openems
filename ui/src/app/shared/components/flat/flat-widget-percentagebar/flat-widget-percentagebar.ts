@@ -1,16 +1,17 @@
-import { Component } from "@angular/core";
+import { Component, ChangeDetectionStrategy } from "@angular/core";
+import { CommonUiModule } from "src/app/shared/common-ui.module";
+import { PipeComponentsModule } from "src/app/shared/pipe/pipe.module";
 import { AbstractFlatWidgetLine } from "../abstract-flat-widget-line";
 
 @Component({
     selector: "oe-flat-widget-percentagebar",
     templateUrl: "./flat-widget-percentagebar.html",
-    standalone: false,
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    imports: [CommonUiModule, PipeComponentsModule],
 })
 export class FlatWidgetPercentagebarComponent extends AbstractFlatWidgetLine {
-
     protected get displayPercent(): number | null {
-        return this.displayValue === null
-            ? null
-            : Math.round(Number.parseFloat(this.displayValue));
+        return this.displayValue === null ? null : Math.round(Number.parseFloat(this.displayValue));
     }
 }

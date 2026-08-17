@@ -9,9 +9,12 @@ import static io.openems.edge.ess.dccharger.api.EssDcCharger.ChannelId.ACTUAL_PO
 import static io.openems.edge.ess.dccharger.api.EssDcCharger.ChannelId.CURRENT;
 import static io.openems.edge.ess.dccharger.api.EssDcCharger.ChannelId.VOLTAGE;
 import static io.openems.edge.goodwe.GoodWeConstants.DEFAULT_UNIT_ID;
+import static io.openems.edge.goodwe.batteryinverter.GoodWeBatteryInverterImpl.calculateWbmsChargeMaxCurrent;
+import static io.openems.edge.goodwe.batteryinverter.GoodWeBatteryInverterImpl.calculateWbmsDischargeMaxCurrent;
 import static io.openems.edge.goodwe.batteryinverter.GoodWeBatteryInverterImpl.doSetBmsVoltage;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.EMS_POWER_MODE;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.EMS_POWER_SET;
+import static io.openems.edge.goodwe.common.GoodWe.ChannelId.GOODWE_TYPE;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.MAX_AC_EXPORT;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.MAX_AC_IMPORT;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.METER_COMMUNICATE_STATUS;
@@ -33,19 +36,24 @@ import static io.openems.edge.goodwe.common.GoodWe.ChannelId.TWO_S_PV5_I;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.TWO_S_PV5_V;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.TWO_S_PV6_I;
 import static io.openems.edge.goodwe.common.GoodWe.ChannelId.TWO_S_PV6_V;
-import static io.openems.edge.goodwe.common.GoodWe.ChannelId.WBMS_CHARGE_MAX_CURRENT;
-import static io.openems.edge.goodwe.common.GoodWe.ChannelId.WBMS_DISCHARGE_MAX_CURRENT;
-import static io.openems.edge.goodwe.common.GoodWe.ChannelId.WBMS_VOLTAGE;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.junit.Test;
+import java.util.Optional;
 
+import org.junit.jupiter.api.Test;
+
+import io.openems.common.test.DummyConfigurationAdmin;
+import io.openems.edge.battery.api.Battery;
 import io.openems.edge.battery.test.DummyBattery;
 import io.openems.edge.batteryinverter.api.SymmetricBatteryInverter;
 import io.openems.edge.bridge.modbus.test.DummyModbusBridge;
+import io.openems.edge.common.channel.WriteChannel;
 import io.openems.edge.common.channel.value.Value;
 import io.openems.edge.common.startstop.StartStopConfig;
 import io.openems.edge.common.sum.DummySum;
@@ -53,11 +61,13 @@ import io.openems.edge.common.sum.GridMode;
 import io.openems.edge.common.test.AbstractComponentTest.TestCase;
 import io.openems.edge.common.test.ComponentTest;
 import io.openems.edge.common.test.DummyComponentManager;
-import io.openems.edge.common.test.DummyConfigurationAdmin;
 import io.openems.edge.common.test.DummyMeta;
 import io.openems.edge.common.test.DummySerialNumberStorage;
 import io.openems.edge.ess.api.SymmetricEss;
+import io.openems.edge.ess.dccharger.api.EssDcCharger;
 import io.openems.edge.ess.test.DummyPower;
+import io.openems.edge.goodwe.charger.mppt.twostring.GoodWeChargerMpptTwoStringImpl;
+import io.openems.edge.goodwe.charger.mppt.twostring.MpptPort;
 import io.openems.edge.goodwe.charger.singlestring.GoodWeChargerPv1;
 import io.openems.edge.goodwe.charger.twostring.GoodWeChargerTwoStringImpl;
 import io.openems.edge.goodwe.charger.twostring.PvPort;
@@ -69,17 +79,19 @@ import io.openems.edge.goodwe.common.enums.EnableDisable;
 import io.openems.edge.goodwe.common.enums.FeedInPowerSettings;
 import io.openems.edge.goodwe.common.enums.FeedInPowerSettings.FixedPowerFactor;
 import io.openems.edge.goodwe.common.enums.GoodWeType;
+import io.openems.edge.goodwe.common.enums.GridCode;
 import io.openems.edge.goodwe.common.enums.MeterCommunicateStatus;
 import io.openems.edge.goodwe.common.enums.PvMode;
 import io.openems.edge.goodwe.common.enums.SafetyCountry;
+import io.openems.edge.goodwe.common.enums.WaveformDetection;
 
 @SuppressWarnings("deprecation")
-public class GoodWeBatteryInverterImplTest {
+class GoodWeBatteryInverterImplTest {
 
-	private static final DummyMeta META = new DummyMeta("meta0");
+	private static final DummyMeta META = new DummyMeta();
 
 	@Test
-	public void testEt() throws Exception {
+	void testEt() throws Exception {
 		var charger = new GoodWeChargerPv1();
 		new ComponentTest(charger) //
 				.addReference("cm", new DummyConfigurationAdmin()) //
@@ -117,18 +129,18 @@ public class GoodWeBatteryInverterImplTest {
 				.next(new TestCase() //
 						.input(GRID_ACTIVE_POWER, 0) //
 						.input(ACTIVE_POWER, 0) //
-						.input(MAX_AC_IMPORT, 0) //
-						.input(MAX_AC_EXPORT, 0) //
+						.input(MAX_AC_IMPORT, -2000) //
+						.input(MAX_AC_EXPORT, 2000) //
 						.input("charger0", ACTUAL_POWER, 2000) //
 						.onExecuteWriteCallbacks(() -> {
 							ess.run(new DummyBattery("battery0"), 1000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.CHARGE_BAT) //
-						.output(EMS_POWER_SET, 1000));
+						.output(EMS_POWER_SET, 1000L));
 	}
 
 	@Test
-	public void testNegativSetActivePoint() throws Exception {
+	void testNegativSetActivePoint() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -153,17 +165,17 @@ public class GoodWeBatteryInverterImplTest {
 				.next(new TestCase() //
 						.input(GRID_ACTIVE_POWER, 0) //
 						.input(ACTIVE_POWER, 0) //
-						.input(MAX_AC_IMPORT, 0) //
-						.input(MAX_AC_EXPORT, 0) //
+						.input(MAX_AC_IMPORT, -2000) //
+						.input(MAX_AC_EXPORT, 2000) //
 						.onExecuteWriteCallbacks(() -> {
 							ess.run(new DummyBattery("battery0"), -1000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.CHARGE_BAT) //
-						.output(EMS_POWER_SET, 1000));
+						.output(EMS_POWER_SET, 1000L));
 	}
 
 	@Test
-	public void testDischargeBattery() throws Exception {
+	void testDischargeBattery() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -188,17 +200,17 @@ public class GoodWeBatteryInverterImplTest {
 				.next(new TestCase() //
 						.input(GRID_ACTIVE_POWER, 0) //
 						.input(ACTIVE_POWER, 0) //
-						.input(MAX_AC_IMPORT, 0) //
-						.input(MAX_AC_EXPORT, 0) //
+						.input(MAX_AC_IMPORT, -2000) //
+						.input(MAX_AC_EXPORT, 2000) //
 						.onExecuteWriteCallbacks(() -> {
 							ess.run(new DummyBattery("battery0"), 1000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.DISCHARGE_BAT) //
-						.output(EMS_POWER_SET, 1000));
+						.output(EMS_POWER_SET, 1000L));
 	}
 
 	@Test
-	public void testEmsPowerModeAutoWithBalancing() throws Exception {
+	void testEmsPowerModeAutoWithBalancing() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -228,11 +240,11 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 6000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testEmsPowerModeAutoWithSurplus() throws Exception {
+	void testEmsPowerModeAutoWithSurplus() throws Exception {
 		var charger = new GoodWeChargerPv1();
 		new ComponentTest(charger) //
 				.addReference("cm", new DummyConfigurationAdmin()) //
@@ -275,11 +287,11 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 10000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testEmsPowerModeAutoWithMaxAcImport() throws Exception {
+	void testEmsPowerModeAutoWithMaxAcImport() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -308,11 +320,11 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 3000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testEmsPowerModeAutoWithMaxAcExport() throws Exception {
+	void testEmsPowerModeAutoWithMaxAcExport() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -341,11 +353,11 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 8000, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testBatteryIsFull() throws Exception {
+	void testBatteryIsFull() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -374,11 +386,11 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 0, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testBatteryIsEmpty() throws Exception {
+	void testBatteryIsEmpty() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		new ComponentTest(ess) //
 				.addReference("meta", META) //
@@ -407,21 +419,44 @@ public class GoodWeBatteryInverterImplTest {
 							ess.run(new DummyBattery("battery0"), 0, 0);
 						}) //
 						.output(EMS_POWER_MODE, EmsPowerMode.AUTO) //
-						.output(EMS_POWER_SET, 0));
+						.output(EMS_POWER_SET, 0L));
 	}
 
 	@Test
-	public void testAcCalculation() throws Exception {
-		var ess = new GoodWeBatteryInverterImpl();
-		new ComponentTest(ess) //
+	void testMaxAcImportExportCalculation() throws Exception {
+
+		var inverter = new GoodWeBatteryInverterImpl();
+		var charger1 = new GoodWeChargerMpptTwoStringImpl();
+
+		new ComponentTest(charger1) //
+				.addReference("cm", new DummyConfigurationAdmin()) //
+				.addReference("essOrBatteryInverter", inverter) //
+				.activate(io.openems.edge.goodwe.charger.mppt.twostring.MyConfig.create() //
+						.setId("charger0") //
+						.setBatteryInverterId("batteryInverter0") //
+						.setMpptPort(MpptPort.MPPT_1) //
+						.build());
+
+		charger1._setActualPower(5000);
+		charger1.getActualPowerChannel().nextProcessImage();
+		inverter.addCharger(charger1);
+		var battery0 = new DummyBattery("battery0");
+		new ComponentTest(inverter) //
 				.addReference("meta", META) //
 				.addReference("power", new DummyPower()) //
 				.addReference("cm", new DummyConfigurationAdmin()) //
 				.addReference("componentManager", new DummyComponentManager()) //
-				.addReference("setModbus", new DummyModbusBridge("modbus0")) //
+				.addReference("setModbus", new DummyModbusBridge("modbus0") //
+						.withRegisters(35011, // Deprecated GoodWe type register
+								new int[] { 0x4757, 0x3135, 0x4b2d, 0x4554, 0x3230 })
+						.withRegisters(35001, // Block including GoodWe Serial Number
+								new int[] { 0xc350, 0x0001, 0x3730, 0x3530, 0x4b45, 0x5446, 0x3235, 0x3830, 0x3030,
+										0x3037 }))
 				.addReference("serialNumberStorage", new DummySerialNumberStorage()) //
 				.addReference("sum", new DummySum()) //
-				.addComponent(new DummyBattery("battery0")).activate(MyConfig.create() //
+				.addComponent(charger1) //
+				.addComponent(battery0) //
+				.activate(MyConfig.create() //
 						.setId("batteryInverter0") //
 						.setModbusId("modbus0") //
 						.setModbusUnitId(DEFAULT_UNIT_ID) //
@@ -433,20 +468,155 @@ public class GoodWeBatteryInverterImplTest {
 						.setControlMode(ControlMode.SMART) //
 						.setStartStop(StartStopConfig.START) //
 						.build()) //
-				.next(new TestCase() //
-						.input(WBMS_CHARGE_MAX_CURRENT, 0) //
-						.input(WBMS_DISCHARGE_MAX_CURRENT, 1) //
-						.input(WBMS_VOLTAGE, 325) //
-						.input(MAX_APPARENT_POWER, 10000) //
+
+				.next(new TestCase(), 10) //
+
+				.next(new TestCase("Limited by MaxApparentPower and PV") //
+						.input(MAX_APPARENT_POWER, 55000) //
+						.input("battery0", Battery.ChannelId.VOLTAGE, 500) //
+						.input("battery0", Battery.ChannelId.CHARGE_MAX_CURRENT, 110) //
+						.input("battery0", Battery.ChannelId.DISCHARGE_MAX_CURRENT, 110) //
+
 						.onExecuteWriteCallbacks(() -> {
-							ess.run(new DummyBattery("battery0"), 0, 0);
+							inverter.run(battery0, 0, 0);
+							assertEquals(55_000, (int) inverter.getGoodweType().maxBatChargeP);
+							assertEquals(55_000, (int) inverter.getGoodweType().maxBatDischargeP);
+						}) //
+						.output(MAX_AC_IMPORT, -50000) // (55kW - 5kW PV)
+						.output(MAX_AC_EXPORT, 55000)) //
+
+				.next(new TestCase("Limited to zero, because of missing values") //
+						.input(MAX_APPARENT_POWER, null) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
 						}) //
 						.output(MAX_AC_IMPORT, 0) //
-						.output(MAX_AC_EXPORT, 325));
+						.output(MAX_AC_EXPORT, 0)) //
+
+				.next(new TestCase("Limited by max DC-power (55kW -/+ PV)") //
+						.input(MAX_APPARENT_POWER, 60000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(MAX_AC_IMPORT, -50000) //
+						.output(MAX_AC_EXPORT, 60000)) //
+
+				.next(new TestCase("Limited by Battery") //
+						.input("battery0", Battery.ChannelId.VOLTAGE, 600) //
+						.input("battery0", Battery.ChannelId.CHARGE_MAX_CURRENT, 50) //
+						.input("battery0", Battery.ChannelId.DISCHARGE_MAX_CURRENT, 50) //
+						.input(MAX_APPARENT_POWER, 50_000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K) //
+						.output(MAX_AC_IMPORT, -25_000) //
+						.output(MAX_AC_EXPORT, 35_000)) //
+
+				.next(new TestCase("Limited by MaxApparentPower") //
+						/*
+						 * MaxApparentPower has higher priority as AllowedChargePower as
+						 * maxAcImport/Export can not be higher than apparent power
+						 */
+						.input("battery0", Battery.ChannelId.VOLTAGE, 700) //
+						.input("battery0", Battery.ChannelId.CHARGE_MAX_CURRENT, 100) //
+						.input("battery0", Battery.ChannelId.DISCHARGE_MAX_CURRENT, 100) //
+						.input(MAX_APPARENT_POWER, 50_000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K) //
+						.output(MAX_AC_IMPORT, -50_000) //
+						.output(MAX_AC_EXPORT, 50_000)) //
+		; //
 	}
 
 	@Test
-	public void testTwoStringCharger() throws Exception {
+	void testMaxAcImportExportCalculationWithForceCharge() throws Exception {
+		var inverter = new GoodWeBatteryInverterImpl();
+		var charger1 = new GoodWeChargerMpptTwoStringImpl();
+
+		new ComponentTest(charger1) //
+				.addReference("cm", new DummyConfigurationAdmin()) //
+				.addReference("essOrBatteryInverter", inverter) //
+				.activate(io.openems.edge.goodwe.charger.mppt.twostring.MyConfig.create() //
+						.setId("charger0") //
+						.setBatteryInverterId("batteryInverter0") //
+						.setMpptPort(MpptPort.MPPT_1) //
+						.build());
+		inverter.addCharger(charger1);
+
+		/*
+		 * WBMS_x_MAX_CURRENT not longer used for calculating the maxAcPower as the
+		 * inverter is not able to handle minus values for force charge/discharge
+		 */
+
+		var battery0 = new DummyBattery("battery0");
+		new ComponentTest(inverter) //
+				.addReference("meta", META) //
+				.addReference("power", new DummyPower()) //
+				.addReference("cm", new DummyConfigurationAdmin()) //
+				.addReference("componentManager", new DummyComponentManager()) //
+				.addReference("setModbus", new DummyModbusBridge("modbus2") //
+						.withRegisters(35011, // Deprecated GoodWe type register
+								new int[] { 0x4757, 0x3135, 0x4b2d, 0x4554, 0x3230 })
+						.withRegisters(35001, // Block including GoodWe Serial Number
+								new int[] { 0xc350, 0x0001, 0x3730, 0x3530, 0x4b45, 0x5446, 0x3235, 0x3830, 0x3030,
+										0x3037 }))
+				.addReference("serialNumberStorage", new DummySerialNumberStorage()) //
+				.addReference("sum", new DummySum()) //
+				.addComponent(charger1) //
+				.addComponent(battery0) //
+				.activate(MyConfig.create() //
+						.setId("batteryInverter0") //
+						.setModbusId("modbus0") //
+						.setModbusUnitId(DEFAULT_UNIT_ID) //
+						.setSafetyCountry(SafetyCountry.GERMANY) //
+						.setMpptForShadowEnable(EnableDisable.ENABLE) //
+						.setBackupEnable(EnableDisable.ENABLE) //
+						.setFeedPowerEnable(EnableDisable.ENABLE) //
+						.setFeedInPowerSettings(FeedInPowerSettings.PU_ENABLE_CURVE) //
+						.setControlMode(ControlMode.SMART) //
+						.setStartStop(StartStopConfig.START) //
+						.build()) //
+
+				.next(new TestCase("Limited by max battery MaxCurrent & Voltage is null") //
+						.input("charger0", EssDcCharger.ChannelId.ACTUAL_POWER, 5000) //
+						.input("battery0", Battery.ChannelId.VOLTAGE, null) //
+						.input("battery0", Battery.ChannelId.CHARGE_MAX_CURRENT, 5) //
+						.input("battery0", Battery.ChannelId.DISCHARGE_MAX_CURRENT, -2) //
+						.input(MAX_APPARENT_POWER, 10000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(MAX_AC_IMPORT, 0) //
+						.output(MAX_AC_EXPORT, 5000) //
+				) //
+
+				.next(new TestCase("Limited by max battery MaxCurrent & Force Charge") //
+						.input("battery0", Battery.ChannelId.VOLTAGE, 600) //
+						.input("battery0", Battery.ChannelId.CHARGE_MAX_CURRENT, 10) //
+						.input("battery0", Battery.ChannelId.DISCHARGE_MAX_CURRENT, -2) //
+						.input(MAX_APPARENT_POWER, 10000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(MAX_AC_IMPORT, -1000) // 600V x 10A = 6kW allowed import minus 5kW DC-PV
+						.output(MAX_AC_EXPORT, 3800)) // 600V x -2A = -1.2kW allowed export plus 5kW DC-PV
+
+				.next(new TestCase("Limited to force charge values without DC-PV") //
+						.input("charger0", EssDcCharger.ChannelId.ACTUAL_POWER, null) //
+						.input(MAX_APPARENT_POWER, 10000) //
+						.onExecuteWriteCallbacks(() -> {
+							inverter.run(battery0, 0, 0);
+						}) //
+						.output(MAX_AC_IMPORT, -6000) // 600V x 10A = 6kW allowed import without DC-PV
+						.output(MAX_AC_EXPORT, -1200)) // 600V x -2A = -1.2kW allowed export without DC-PV
+		;
+	}
+
+	@Test
+	void testTwoStringCharger() throws Exception {
 		var ess = new GoodWeBatteryInverterImpl();
 		var charger1 = new GoodWeChargerTwoStringImpl();
 		var charger2 = new GoodWeChargerTwoStringImpl();
@@ -731,7 +901,7 @@ public class GoodWeBatteryInverterImplTest {
 	}
 
 	@Test
-	public void testDoSetBmsVoltage() {
+	void testDoSetBmsVoltage() {
 		final var battery = new DummyBattery("battery0");
 		final var bmsChargeMaxVoltage = new Value<Integer>(null, 123);
 		final var bmsDischargeMinVoltage = new Value<Integer>(null, 456);
@@ -764,7 +934,7 @@ public class GoodWeBatteryInverterImplTest {
 	}
 
 	@Test
-	public void testReadFromModbus() throws Exception {
+	void testReadFromModbus() throws Exception {
 		var sut = new GoodWeBatteryInverterImpl();
 		new ComponentTest(sut) //
 				.addReference("meta", META) //
@@ -819,7 +989,7 @@ public class GoodWeBatteryInverterImplTest {
 	}
 
 	@Test
-	public void testPowerModeFromModbus() throws Exception {
+	void testPowerModeFromModbus() throws Exception {
 		var sut = new GoodWeBatteryInverterImpl();
 		new ComponentTest(sut) //
 				.addReference("meta", META) //
@@ -867,7 +1037,7 @@ public class GoodWeBatteryInverterImplTest {
 	}
 
 	@Test
-	public void testNoStatesReadFromModbus() throws Exception {
+	void testNoStatesReadFromModbus() throws Exception {
 		var inv = "batteryInverter0";
 		var sut = new GoodWeBatteryInverterImpl();
 		new ComponentTest(sut) //
@@ -951,7 +1121,78 @@ public class GoodWeBatteryInverterImplTest {
 	}
 
 	@Test
-	public void testStatesReadFromModbus() throws Exception {
+	void testGoodWePowerSettings() throws Exception {
+		var inv = "batteryInverter0";
+		var sut = new GoodWeBatteryInverterImpl();
+		new ComponentTest(sut) //
+				.addReference("meta", META) //
+				.addReference("cm", new DummyConfigurationAdmin()) //
+				.addReference("componentManager", new DummyComponentManager(createDummyClock())) //
+				.addReference("serialNumberStorage", new DummySerialNumberStorage()) //
+				.addReference("setModbus", new DummyModbusBridge("modbus2") //
+						.withRegisters(32000, // GoodWe State Register
+								new int[] {
+										0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+										0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffff, 0xffff, 0xffff,
+										0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff })
+						.withRegisters(35001, // Block including GoodWe Serial Number
+								new int[] { 0xc350, 0x0001, 0x3730, 0x3530, 0x4b45, 0x5446, 0x3235, 0x3830, 0x3030,
+										0x3037 })
+						.withRegisters(35011, new int[] { 0, 0, 0, 0, 0 }) //
+						.withRegisters(35180, // Battery values of GoodWe
+								new int[] { 0x056e, 0x0000, 0xffff, 0xfffb, 0x0002 })
+						.withRegisters(35016, // GoodWe Software Versions
+								new int[] { 0, 0, 0x07df, 0x0006, 0x0185 })
+						.withRegisters(35111, // PV data including GridMode
+								new int[] { 0x8FC, 0, 0, 0, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0x0200, 0x8EF, 0x0054,
+										0x1389, 0xFFFF, 0xF869, 0x08E3, 0x0055, 0x138B, 0xFFFF, 0xF870, 0x08EC, 0x0056,
+										0x138B, 0xFFFF, 0xF86b, 0x0001 /* GridMode */ }))
+				.activate(MyConfig.create() //
+						.setId(inv) //
+						.setModbusId("modbus2") //
+						.setMpptForShadowEnable(EnableDisable.DISABLE) //
+						.setModbusUnitId(DEFAULT_UNIT_ID) //
+						.setSafetyCountry(SafetyCountry.GERMANY) //
+						.setMpptForShadowEnable(EnableDisable.ENABLE) //
+						.setBackupEnable(EnableDisable.ENABLE) //
+						.setFeedPowerEnable(EnableDisable.ENABLE) //
+						.setFeedInPowerSettings(FeedInPowerSettings.PU_ENABLE_CURVE) //
+						.setControlMode(ControlMode.SMART) //
+						.setStartStop(StartStopConfig.START) //
+						.build()) //
+
+				.next(new TestCase() //
+						.output(GoodWe.ChannelId.SERIAL_NUMBER, "7050KETF25800007") //
+						.output(SymmetricEss.ChannelId.MAX_APPARENT_POWER, 50000) //
+						.output(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.UNDEFINED)) //
+
+				.next(new TestCase(), 50) //
+				.next(new TestCase() //
+						.output(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K)) //
+
+				.next(new TestCase(), 50).next(new TestCase() //
+						.output(inv, "GwState32000B0", false) //
+						.output(inv, "GwState32000B1", false) //
+						.output(inv, "GwState32000B2", false) //
+						.output(inv, "GwState32000B3", false) //
+						.output(inv, "GwState32000B4", false) //
+						.output(inv, "GwState32000B5", false) //
+						.output(inv, "GwState32000B6", false) //
+						.output(inv, "GwState32000B7", false) //
+						.output(inv, "GwState32000B8", false) //
+						.output(inv, "GwState32000B9", false) //
+						.output(inv, "GwState32000B10", false) //
+						.output(inv, "GwState32000B11", false) //
+						.output(inv, "GwState32000B12", false) //
+						.output(inv, "GwState32000B13", false) //
+						.output(inv, "GwState32000B14", false) //
+						.output(inv, "GwState32000B15", false)) //
+				.deactivate();
+
+	}
+
+	@Test
+	void testStatesReadFromModbus() throws Exception {
 		var inv = "batteryInverter0";
 		var sut = new GoodWeBatteryInverterImpl();
 		new ComponentTest(sut) //
@@ -1033,4 +1274,230 @@ public class GoodWeBatteryInverterImplTest {
 
 		sut.deactivate();
 	}
+
+	@Test
+	void testDynamicState14Text() throws Exception {
+		var component = new GoodWeBatteryInverterImpl();
+		final var docForState14 = component.channel(GoodWe.ChannelId.STATE_14).channelDoc();
+
+		var test = getComponentTest(component, GridCode.VDE_4105) //
+				.next(new TestCase() //
+						.input(GOODWE_TYPE, GoodWeType.GOODWE_5K_BT));
+
+		assertEquals(
+				"Utility Phase Failure | Phasenfehler | Überprüfen Sie das Drehfeld am Wechselrichter. Ggf. Kommunikationsadapter (ET+) nicht (richtig) gesteckt",
+				docForState14.getText());
+
+		test.next(new TestCase() //
+				.input(GOODWE_TYPE, GoodWeType.FENECON_FHI_10_DAH));
+
+		assertEquals("Utility Phase Failure | Phasenfehler | Überprüfen Sie das Drehfeld am Wechselrichter.",
+				docForState14.getText());
+	}
+
+	@Test
+	void testWaveFormDetectionWith4105() throws Exception {
+		getComponentTest(GridCode.VDE_4105, new TestCase().input(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K)) //
+				.next(new TestCase()
+						.output(GoodWe.ChannelId.WAVE_FORM_DETECTION, WaveformDetection.HIGH_PRECISION));
+	}
+
+	@Test
+	void testWaveFormDetectionWith4110() throws Exception {
+		getComponentTest(GridCode.VDE_4110, new TestCase().input(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K)) //
+				.next(new TestCase() //
+						.input(GoodWe.ChannelId.GOODWE_TYPE, GoodWeType.FENECON_50K) //
+						.output(GoodWe.ChannelId.WAVE_FORM_DETECTION, WaveformDetection.DETECTION_DISABLED));
+	}
+
+	private static ComponentTest getComponentTest(//
+			GridCode gridCode, //
+			TestCase... inputsBeforeActive //
+	) throws Exception {
+		return getComponentTest(new GoodWeBatteryInverterImpl(), gridCode, inputsBeforeActive);
+	}
+
+	private static ComponentTest getComponentTest(//
+			GoodWeBatteryInverter component, //
+			GridCode gridCode, //
+			TestCase... inputsBeforeActive //
+	) throws Exception {
+		final var componentTest = new ComponentTest(component) //
+				.addReference("meta", META) //
+				.addReference("power", new DummyPower()) //
+				.addReference("cm", new DummyConfigurationAdmin()) //
+				.addReference("componentManager", new DummyComponentManager()) //
+				.addReference("setModbus", new DummyModbusBridge("modbus0")) //
+				.addReference("serialNumberStorage", new DummySerialNumberStorage()) //
+				.addReference("sum", new DummySum()); //
+
+		for (var input : inputsBeforeActive) {
+			componentTest.next(input);
+		}
+
+		componentTest.activate(MyConfig.create() //
+				.setId("batteryInverter0") //
+				.setModbusId("modbus0") //
+				.setModbusUnitId(DEFAULT_UNIT_ID) //
+				.setSafetyCountry(SafetyCountry.GERMANY) //
+				.setMpptForShadowEnable(EnableDisable.ENABLE) //
+				.setBackupEnable(EnableDisable.ENABLE) //
+				.setFeedPowerEnable(EnableDisable.ENABLE) //
+				.setFeedInPowerSettings(FeedInPowerSettings.PU_ENABLE_CURVE) //
+				.setControlMode(ControlMode.REMOTE) //
+				.setStartStop(StartStopConfig.START) //
+				.setGridCode(gridCode) //
+				.build());
+
+		return componentTest;
+	}
+
+	@Test
+	void testCalculateWbmsChargeMaxCurrent() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		final WriteChannel<Integer> wbmsMaxCharge = mock();
+		when(wbmsMaxCharge.value()).thenReturn(new Value<>(null, 100));
+
+		final var result = calculateWbmsChargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, wbmsMaxCharge, null, null, null, null, null, null, null, null, null, null,
+						null, null, lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, false), 100);
+
+		assertEquals(100, result);
+	}
+
+	@Test
+	void testCalculateWbmsChargeMaxCurrentLock() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		when(lock.getNextWriteValue()).thenReturn(Optional.of(true));
+
+		final var result = calculateWbmsChargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+						lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, false), 100);
+
+		assertEquals(0, result);
+	}
+
+	@Test
+	void testCalculateWbmsChargeMaxCurrentNegativeDischargeSelf() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(-2);
+
+		final WriteChannel<Boolean> lock = mock();
+		final WriteChannel<Integer> wbmsMaxCharge = mock();
+		when(wbmsMaxCharge.value()).thenReturn(new Value<>(null, 100));
+
+		final var result = calculateWbmsChargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, wbmsMaxCharge, null, null, null, null, null, null, null, null, null, null,
+						null, null, lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, true), 100);
+
+		assertEquals(100, result);
+	}
+
+	@Test
+	void testCalculateWbmsChargeMaxCurrentNegativeDischargeOther() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		when(lock.getNextWriteValue()).thenReturn(Optional.of(true));
+
+		final var result = calculateWbmsChargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+						lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, true), 100);
+
+		assertEquals(0, result);
+	}
+
+	@Test
+	void testCalculateWbmsDischargeMaxCurrent() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		final WriteChannel<Integer> wbmsMaxDischarge = mock();
+		when(wbmsMaxDischarge.value()).thenReturn(new Value<>(null, 100));
+
+		final var result = calculateWbmsDischargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, wbmsMaxDischarge, null, null, null, null, null, null, null,
+						null, null, lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, false), 100);
+
+		assertEquals(100, result);
+	}
+
+	@Test
+	void testCalculateWbmsDischargeMaxCurrentLock() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		when(lock.getNextWriteValue()).thenReturn(Optional.of(true));
+
+		final var result = calculateWbmsDischargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+						lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(false, false), 100);
+
+		assertEquals(0, result);
+	}
+
+	@Test
+	void testCalculateWbmsDischargeMaxCurrentNegativeDischargeSelf() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(-2) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		final WriteChannel<Integer> wbmsMaxDischarge = mock();
+		when(wbmsMaxDischarge.value()).thenReturn(new Value<>(null, 100));
+
+		final var result = calculateWbmsDischargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, wbmsMaxDischarge, null, null, null, null, null, null, null,
+						null, null, lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(true, false), 100);
+
+		assertEquals(100, result);
+	}
+
+	@Test
+	void testCalculateWbmsDischargeMaxCurrentNegativeDischargeOther() {
+		final var battery = new DummyBattery("battery0") //
+				.withChargeMaxCurrent(200) //
+				.withDischargeMaxCurrent(200);
+
+		final WriteChannel<Boolean> lock = mock();
+		when(lock.getNextWriteValue()).thenReturn(Optional.of(true));
+
+		final var result = calculateWbmsDischargeMaxCurrent(battery,
+				new GoodWeBatteryInverterImpl.BatteryLimitsChannel(null, null, null, null, null, null, null, null, null,
+						null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+						lock),
+				new GoodWeBatteryInverterImpl.ClusterInfo(true, false), 100);
+
+		assertEquals(0, result);
+	}
+
 }
