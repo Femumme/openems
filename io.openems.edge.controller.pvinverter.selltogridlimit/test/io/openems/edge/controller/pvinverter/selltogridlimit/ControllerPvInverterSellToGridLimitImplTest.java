@@ -379,10 +379,7 @@ public class ControllerPvInverterSellToGridLimitImplTest {
 	}
 
 	@Test
-	public void negativePowerRateLimitTest() throws Exception {
-		// Cycle 1: raw = 5_000 + 0 + (−10_000) = −5_000; lastSetLimit=0 (≤100) → output −5_000
-		// Cycle 2: raw = −5_000; no change → output −5_000
-		// Cycle 3: raw = 2_000 + 0 + (−10_000) = −8_000; lastSetLimit=−5_000 → ramp: −5_000 − 1_000 = −6_000
+	public void setpointIsClampedToZeroTest() throws Exception {
 		new ControllerTest(new ControllerPvInverterSellToGridLimitImpl()) //
 				.addReference("componentManager", new DummyComponentManager()) //
 				.addComponent(new DummyElectricityMeter("meter0")) //
@@ -391,21 +388,65 @@ public class ControllerPvInverterSellToGridLimitImplTest {
 						.setId("ctrl0") //
 						.setMeterId("meter0") //
 						.setAsymmetricMode(false) //
-						.setMaximumSellToGridPower(-10_000) //
+						.setMaximumSellToGridPower(5_000) //
 						.setPvInverterId("pvInverter0") //
 						.build())
 				.next(new TestCase() //
-						.input("meter0", ACTIVE_POWER, 5_000) //
-						.input("pvInverter0", ACTIVE_POWER, 0) //
-						.output("pvInverter0", ACTIVE_POWER_LIMIT, -5_000)) //
+						.input("meter0", ACTIVE_POWER, -6000) //
+						.input("pvInverter0", ACTIVE_POWER, 500) //
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 0)) //
 				.next(new TestCase() //
-						.input("meter0", ACTIVE_POWER, 5_000) //
-						.input("pvInverter0", ACTIVE_POWER, 0) //
-						.output("pvInverter0", ACTIVE_POWER_LIMIT, -5_000)) //
+						.input("meter0", ACTIVE_POWER, -5000) //
+						.input("pvInverter0", ACTIVE_POWER, 500) //
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 500)) //
+				.deactivate();
+	}
+
+	@Test
+	public void negativeLimitTest() throws Exception {
+		new ControllerTest(new ControllerPvInverterSellToGridLimitImpl()) //
+				.addReference("componentManager", new DummyComponentManager()) //
+				.addComponent(new DummyElectricityMeter("meter0")) //
+				.addComponent(new DummyManagedSymmetricPvInverter("pvInverter0")) //
+				.activate(MyConfig.create() //
+						.setId("ctrl0") //
+						.setMeterId("meter0") //
+						.setAsymmetricMode(false) //
+						.setMaximumSellToGridPower(-1_000) //
+						.setPvInverterId("pvInverter0") //
+						.build())
 				.next(new TestCase() //
-						.input("meter0", ACTIVE_POWER, 2_000) //
+						.input("meter0", ACTIVE_POWER, 0) //
+						.input("pvInverter0", ACTIVE_POWER, 500) //
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 0)) //
+				.next(new TestCase() //
+						.input("meter0", ACTIVE_POWER, 2000) //
 						.input("pvInverter0", ACTIVE_POWER, 0) //
-						.output("pvInverter0", ACTIVE_POWER_LIMIT, -6_000)) // -5000 - 5000*0.2 = -6000
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 1000)) //
+				.deactivate();
+	}
+
+	@Test
+	public void negativePowerIsClampedBeforeRateLimitTest() throws Exception {
+		new ControllerTest(new ControllerPvInverterSellToGridLimitImpl()) //
+				.addReference("componentManager", new DummyComponentManager()) //
+				.addComponent(new DummyElectricityMeter("meter0")) //
+				.addComponent(new DummyManagedSymmetricPvInverter("pvInverter0")) //
+				.activate(MyConfig.create() //
+						.setId("ctrl0") //
+						.setMeterId("meter0") //
+						.setAsymmetricMode(false) //
+						.setMaximumSellToGridPower(5_000) //
+						.setPvInverterId("pvInverter0") //
+						.build())
+				.next(new TestCase() //
+						.input("meter0", ACTIVE_POWER, -5_000) //
+						.input("pvInverter0", ACTIVE_POWER, 5_000) //
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 5_000)) //
+				.next(new TestCase() //
+						.input("meter0", ACTIVE_POWER, -11_000) //
+						.input("pvInverter0", ACTIVE_POWER, 0) //
+						.output("pvInverter0", ACTIVE_POWER_LIMIT, 0)) //
 				.deactivate();
 	}
 }
