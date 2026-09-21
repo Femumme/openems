@@ -11,16 +11,8 @@ cd openems
 cp docker/.env.example docker/.env
 ```
 
-In `docker/.env` die vom Browser erreichbare Adresse des Docker-Hosts eintragen:
-
-```dotenv
-UI_WEBSOCKET=ws://192.168.89.204:8075
-OPENEMS_VERSION=latest
-```
-
-Die Beispiel-IP durch die eigene IP oder einen auflösbaren Hostnamen ersetzen.
-`localhost` funktioniert nur, wenn der Browser auf dem Docker-Host läuft.
-Für die UI über HTTPS ist ein WebSocket-Proxy mit TLS und einer `wss://`-URL nötig.
+In `docker/.env` kann mit `OPENEMS_VERSION` ein veröffentlichter Tag für beide
+Images festgelegt werden. Standardmäßig wird `latest` verwendet.
 
 Alle folgenden Befehle werden im Repository-Verzeichnis ausgeführt:
 

@@ -12,7 +12,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 		private int peakShavingPower;
 		private int rechargePower;
 		private boolean limitOnly;
-		private int socInfimum = 0;
+		private int socInfimum;
 		private int socSupremum = 100;
 
 		private Builder() {

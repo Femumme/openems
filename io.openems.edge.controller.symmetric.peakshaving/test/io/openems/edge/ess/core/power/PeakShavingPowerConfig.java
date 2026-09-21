@@ -44,4 +44,14 @@ public class PeakShavingPowerConfig extends AbstractComponentConfig implements C
 	public double d() {
 		return 0.1;
 	}
+
+	@Override
+	public boolean enablePT1Filter() {
+		return false;
+	}
+
+	@Override
+	public int pt1TimeConstant() {
+		return 0;
+	}
 }

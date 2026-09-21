@@ -14,9 +14,9 @@ Run from the repository root:
 
 ```bash
 cp docker/.env.example docker/.env
-# Edit docker/.env: set UI_WEBSOCKET to ws://<Docker-host-IP>:8075.
-docker compose -f docker/docker-compose.yml pull
-docker compose -f docker/docker-compose.yml up -d
+# Optionally set OPENEMS_VERSION to a published tag.
+docker compose --env-file docker/.env -f docker/docker-compose.yml pull
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 ```
 Set `OPENEMS_VERSION` in `docker/.env` to pin both images to a published tag.
 `mise run start:remote-edge` starts the same Compose deployment.

@@ -8,9 +8,9 @@ services:
       - ./edge/config:/var/opt/openems/config:rw
       - ./edge/data:/var/opt/openems/data:rw
     ports:
+      - "502:502" # Modbus TCP
       - "8080:8080" # Apache Felix Web Console
       - "8075:8075" # UI WebSocket
-      - "502:502"   # Modbus TCP
 
   ui:
     image: ghcr.io/mummeenergie/openems-ui-edge:${OPENEMS_VERSION:-latest}
@@ -18,8 +18,8 @@ services:
     hostname: ui
     restart: unless-stopped
     environment:
-      # This URL is used by the browser, not by the UI container.
-      UI_WEBSOCKET: ${UI_WEBSOCKET:?Set UI_WEBSOCKET to the browser-reachable Edge URL, e.g. ws://192.168.89.204:8075}
+      WEBSOCKET_HOST: edge
+      WEBSOCKET_PORT: "8075"
     ports:
       - "80:80"
       - "443:443"

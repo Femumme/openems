@@ -158,6 +158,9 @@ public class ControllerPvInverterSellToGridLimitImpl extends AbstractOpenemsComp
 				? this.calculateAsymmetricPower(pvInverter, meter, essActivePower)
 				: this.calculateSymmetricPower(pvInverter, meter, essActivePower);
 
+		// Clamp to >=0: unsigned Modbus registers wrap negatives to huge positives, disabling the control logic.
+		calculatedPower = Math.max(0, calculatedPower);
+
 		pvInverter.setActivePowerLimit(this.applyRateLimit(calculatedPower));
 	}
 }
