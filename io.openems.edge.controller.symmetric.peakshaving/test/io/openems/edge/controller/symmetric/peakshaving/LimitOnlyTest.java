@@ -17,11 +17,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 
 import io.openems.common.exceptions.InvalidValueException;
+import io.openems.common.test.DummyConfigurationAdmin;
 import io.openems.edge.common.sum.GridMode;
 import io.openems.edge.common.test.AbstractComponentTest.TestCase;
 import io.openems.edge.common.test.ComponentTest;
 import io.openems.edge.common.test.DummyComponentManager;
-import io.openems.edge.common.test.DummyConfigurationAdmin;
 import io.openems.edge.common.test.TestUtils;
 import io.openems.edge.controller.api.common.ApiWorker;
 import io.openems.edge.controller.api.common.WritePojo;
@@ -90,8 +90,8 @@ public class LimitOnlyTest {
 		var f = new Fixture();
 		f.controller.run();
 		assertFalse(f.ess.getSetReactivePowerEqualsChannel().getNextWriteValue().isPresent());
-		f.ess.setReactivePowerEquals(75_000);
-		f.ess.setActivePowerEquals(-100_000);
+		f.ess.setReactivePowerEqualsWithoutFilter(75_000);
+		f.ess.setActivePowerEqualsWithoutFilter(-100_000);
 		f.solve();
 		assertEquals(75_000, f.applied.get().reactivePower());
 	}
@@ -250,7 +250,7 @@ public class LimitOnlyTest {
 			otherApi.run();
 			assertEquals(-250_000, f.power.getMinPower(f.ess, ALL, ACTIVE));
 			assertTrue(f.power.getMaxPower(f.ess, ALL, ACTIVE) > 50_000);
-			f.ess.setActivePowerEquals(50_000);
+			f.ess.setActivePowerEqualsWithoutFilter(50_000);
 			assertEquals(50_000, f.solve());
 			assertEquals(20_000, f.applied.get().reactivePower());
 		} finally {
@@ -344,7 +344,7 @@ public class LimitOnlyTest {
 
 		private int cycle(int externalPower) throws Exception {
 			this.controller.run();
-			this.ess.setActivePowerEquals(externalPower);
+			this.ess.setActivePowerEqualsWithoutFilter(externalPower);
 			return this.solve();
 		}
 
@@ -363,7 +363,6 @@ public class LimitOnlyTest {
 		private ControllerEssBalancingImpl createFallback() throws Exception {
 			var fallback = new ControllerEssBalancingImpl();
 			new ControllerTest(fallback) //
-					.addReference("cm", new DummyConfigurationAdmin()) //
 					.addReference("ess", this.ess).addReference("meter", this.meter) //
 					.activate(new PeakShavingBalancingConfig());
 			return fallback;
