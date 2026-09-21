@@ -140,7 +140,7 @@ subprojects {
 		maxParallelForks = (Runtime.getRuntime().availableProcessors() * 0.66).toInt().coerceAtLeast(1)
 		reports {
 			html.required.set(false)
-			junitXml.required.set(false)
+			junitXml.required.set(true)
 		}
 
 		// Avoid Mockito inline self-attach warning on newer JDKs by passing Mockito as javaagent.

@@ -28,14 +28,19 @@ jobs:
       - name: Build all Java packages
         run: ./gradlew build --console=colored --warn
 
+      - name: Upload Java test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: java-test-results
+          path: '**/TEST-*.xml'
+          if-no-files-found: ignore
+
       - name: Resolve OpenEMS bundles
         run: ./gradlew resolve --console=colored --warn
 
-      - name: Validate BackendApp.bndrun
-        run: git diff --exit-code io.openems.backend.application/BackendApp.bndrun
-
-      - name: Validate EdgeApp.bndrun
-        run: git diff --exit-code io.openems.edge.application/EdgeApp.bndrun
+      - name: Validate OSGi resolution
+        run: git diff --exit-code -- io.openems.backend.application/BackendApp.bndrun io.openems.edge.application/EdgeApp.bndrun
 
       - name: Generate JaCoCo Code-coverage-report
         run: ./gradlew jacocoLogAggregatedCoverage
@@ -65,15 +70,27 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: ${{ runner.os }}-node-
 
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci --prefer-offline --cache ~/.npm
+
+      - name: Configure Angular cache
+        working-directory: ui
+        run: node_modules/.bin/ng config cli.cache.path "~/.ng"
+
+      - name: Lint OpenEMS UI
+        working-directory: ui
+        run: npm run lint
+
       - name: Build OpenEMS UI
-        run: |
-          cd ui
-          npm ci --prefer-offline --cache ~/.npm
-          node_modules/.bin/ng config cli.cache.path "~/.ng"
-          npm run lint
-          node_modules/.bin/ng build -c "openems,openems-edge-prod,prod"
-          export CHROME_BIN=/usr/bin/google-chrome-stable
-          npm run test -- --code-coverage --no-watch --no-progress --browsers=ChromeHeadlessCI
+        working-directory: ui
+        run: node_modules/.bin/ng build -c "openems,openems-edge-prod,prod"
+
+      - name: Test OpenEMS UI
+        working-directory: ui
+        env:
+          CHROME_BIN: /usr/bin/google-chrome-stable
+        run: npm run test -- --code-coverage --no-watch --no-progress --browsers=ChromeHeadlessCI
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0

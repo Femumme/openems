@@ -11,6 +11,7 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 		private String meterId;
 		private int peakShavingPower;
 		private int rechargePower;
+		private boolean limitOnly;
 		private int socInfimum;
 		private int socSupremum = 100;
 
@@ -39,6 +40,11 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 
 		public Builder setRechargePower(int rechargePower) {
 			this.rechargePower = rechargePower;
+			return this;
+		}
+
+		public Builder setLimitOnly(boolean limitOnly) {
+			this.limitOnly = limitOnly;
 			return this;
 		}
 
@@ -91,6 +97,11 @@ public class MyConfig extends AbstractComponentConfig implements Config {
 	@Override
 	public int rechargePower() {
 		return this.builder.rechargePower;
+	}
+
+	@Override
+	public boolean limitOnly() {
+		return this.builder.limitOnly;
 	}
 
 	@Override

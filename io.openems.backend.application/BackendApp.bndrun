@@ -33,6 +33,7 @@
 	io.openems.backend.application;startlevel=17,\
 
 -runrequires: \
+	bnd.identity;id='io.openems.wrapper.okhttp',\
 	bnd.identity;id='org.ops4j.pax.logging.pax-logging-api',\
 	bnd.identity;id='org.ops4j.pax.logging.pax-logging-log4j2',\
 	bnd.identity;id='org.osgi.service.jdbc',\

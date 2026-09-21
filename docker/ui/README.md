@@ -1,12 +1,16 @@
-# OpenEMS UI deployment
+# OpenEMS Edge UI
 
-- Runs published fork image via Docker Compose at `../docker-compose.yml`.
-- Runtime env `WEBSOCKET_HOST` and `WEBSOCKET_PORT` define websocket target.
+- Pulled from `ghcr.io/mummeenergie/openems-ui-edge:${OPENEMS_VERSION:-latest}`.
+- UI nginx proxies `/openems-edge` to Compose service `edge:8075`.
+- Browser uses UI host for WebSocket access; no Docker-internal hostname is needed.
 
-Run from the `docker` directory:
+Run from the repository root:
 
 ```bash
-docker compose up -d
+cp docker/.env.example docker/.env
+# Optionally set OPENEMS_VERSION to a published tag.
+docker compose --env-file docker/.env -f docker/docker-compose.yml pull
+docker compose --env-file docker/.env -f docker/docker-compose.yml up -d
 ```
 
-Open `http://localhost/` in your browser.
+Open `http://<Docker-host-IP>/` in your browser.
